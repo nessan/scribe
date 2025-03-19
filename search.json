@@ -411,7 +411,7 @@
     "href": "index.html#installation",
     "title": "Scribe",
     "section": "Installation",
-    "text": "Installation\nThe module has no dependencies.  Copy the single scribe.lua file into a project and start to use it.",
+    "text": "Installation\nThe module has no dependencies.  Copy the single scribe.lua file into a project and start to use it.\nReleased versions will also be uploaded to the luarocks repository, so you should be able to install them using:\nluarocks install scribe",
     "crumbs": [
       "Home",
       "Overview"
@@ -491,7 +491,7 @@
     "href": "pages/index.html#installation",
     "title": "Scribe",
     "section": "Installation",
-    "text": "Installation\nThe module has no dependencies.  Copy the single scribe.lua file into a project and start to use it."
+    "text": "Installation\nThe module has no dependencies.  Copy the single scribe.lua file into a project and start to use it.\nReleased versions will also be uploaded to the luarocks repository, so you should be able to install them using:\nluarocks install scribe"
   },
   {
     "objectID": "pages/index.html#conversion-methods",
