@@ -103,15 +103,15 @@ end
 Now `print(pretty(mouse))` returns:
 ```txt
 {
- last = Mouse,
- first = Minnie
+    last = Mouse,
+    first = Minnie
 }
 ```
 while `print(pretty(friends))` returns:
 ```txt
 [                       # <1>
- 1 = Mickey,         # <2>
- 2 = Goofy
+    1 = Mickey,         # <2>
+    2 = Goofy
 ]
 ```
 1. Arrays are now delimited with square brackets.
@@ -137,15 +137,15 @@ end
 Now `print(pretty(friends))` returns:
 ```txt
 [
- Mickey,
- Goofy
+    Mickey,
+    Goofy
 ]
 ```
 The output from `print(pretty(mouse))` remains unchanged:
 ```txt
 {
- last = Mouse,
- first = Minnie
+    last = Mouse,
+    first = Minnie
 }
 ```
 
@@ -209,7 +209,7 @@ end
 Now `print(classic(friends))` returns
 ```txt
 {
- Mickey,
- Goofy
+    Mickey,
+    Goofy
 }
 ```

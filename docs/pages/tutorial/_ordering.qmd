@@ -217,13 +217,12 @@ end
 Now if you try `print(pretty(user))` you *always* get:
 ```txt
 {                       # <1>
- first = Minnie,
- friends =           # <2>
- [
- Mickey,
- Goofy
- ],
- last = Mouse
+    first = Minnie,
+    friends = [         # <2>
+        Mickey,
+        Goofy
+    ],
+    last = Mouse
 }
 ```
 1. `user` is a key-value table, and the elements are shown with the keys alphabetically.

@@ -86,8 +86,8 @@ end
 We can now call `print(table_string(mouse))` and get the same output as before:
 ```txt
 {
- last = Mouse,
- first = Minnie,
+    last = Mouse,
+    first = Minnie,
 
 }
 ```
@@ -188,12 +188,11 @@ For example, `print(inline(mouse))` now returns:
 `print(pretty(mouse))` returns:
 ```txt
 {
- last = Mouse,
- first = Minnie,
+    last = Mouse,
+    first = Minnie,
 
 }
 ```
 
 TIP: Adding small facade functions like `pretty` and `inline` can make the API more user-friendly.
 Providing a few of these functions for everyday use cases is a good idea.
-

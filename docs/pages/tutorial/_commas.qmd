@@ -134,8 +134,8 @@ print(pretty(mouse))
 Yields:
 ```txt
 {
- first = Minnie,
- last = Mouse        # <1>
+    first = Minnie,
+    last = Mouse        # <1>
 }
 ```
 1. Yeah! That extra comma is gone!
@@ -192,8 +192,8 @@ print(pretty(mouse))
 Yields:
 ```txt
 {
- first = Minnie,
- last = Mouse        # <1>
+    first = Minnie,
+    last = Mouse        # <1>
 }
 ```
 

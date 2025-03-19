@@ -10,8 +10,8 @@ Here is how our `user` table would look in this format:
 last: Mouse,
 first: Minnie,
 friends:            # <1>
- Mickey,
- Goofy
+    Mickey,
+    Goofy
 ```
 1. This all looks straightforward, but this format is tricky to implement.
 
@@ -35,10 +35,10 @@ end
 ```
 If we try `print(alt(user))` we get something like:
 ```txt
- first: Minnie,  # <1>
- last: Mouse,
- friends:
- Mickey,
+    first: Minnie,  # <1>
+    last: Mouse,
+    friends:
+        Mickey,
  Goofy
  # <2>
 
@@ -99,7 +99,7 @@ With that in place, `print(alt(user))` returns something unindented at the outer
 first: Minnie,
 last: Mouse,
 friends: Mickey,            # <1>
- Goofy
+    Goofy
 ```
 1. There should be a new line after `friends` here.
 
@@ -127,7 +127,7 @@ last: Mouse,
 first: Minnie,
 friends:
 Mickey,                # <1>
- Goofy
+    Goofy
 ```
 1. We're missing an indentation on the `Mickey` line.
 
@@ -197,8 +197,8 @@ With this change in place `print(alt(user))` returns something like:
 last: Mouse,        # <1>
 first: Minnie,
 friends:
- Mickey,
- Goofy
+    Mickey,
+    Goofy
 ```
 1. The elements can be ordered differently.
 
@@ -206,12 +206,12 @@ The other formats still work as expected.
 `print(pretty(user))` returns:
 ```txt
 {
- last = Mouse,
- first = Minnie,
- friends = [
- Mickey,
- Goofy
- ]
+    last = Mouse,
+    first = Minnie,
+    friends = [
+        Mickey,
+        Goofy
+    ]
 }
 ```
 `print(inline(user))` returns:

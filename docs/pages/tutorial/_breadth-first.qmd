@@ -155,10 +155,10 @@ For example, perhaps you are coding a Cludeo-type murder mystery game set in a b
 Each room might have a potential murder weapon in it:
 ```lua
 local rooms = {
- { name = "Library", weapon = "Lead Pipe" },
- { name = "Kitchen", weapon = "Knife"     },
- { name = "Lounge",  weapon = "Poison"    },
- { name = "Bedroom", weapon = "Garrotte"  }
+    { name = "Library", weapon = "Lead Pipe" },
+    { name = "Kitchen", weapon = "Knife"     },
+    { name = "Lounge",  weapon = "Poison"    },
+    { name = "Bedroom", weapon = "Garrotte"  }
 }
 ```
 The user will move from room to room in a fashion that might be randomly generated or set by the game's storyline.
@@ -171,30 +171,30 @@ rooms[1].prev, rooms[2].prev, rooms[3].prev, rooms[4].prev = rooms[4], rooms[1],
 Now if we `print(pretty(rooms))` we get:
 ```txt
 [
- {
- name = "Library",
- next = <2>,
- prev = <4>,
- weapon = "Lead Pipe"
- },
- {
- name = "Kitchen",
- next = <3>,
- prev = <1>,
- weapon = "Knife"
- },
- {
- name = "Lounge",
- next = <4>,
- prev = <2>,
- weapon = "Poison"
- },
- {
- name = "Bedroom",
- next = <1>,
- prev = <3>,
- weapon = "Garrotte"
- }
+    {
+        name = "Library",
+        next = <2>,
+        prev = <4>,
+        weapon = "Lead Pipe"
+    },
+    {
+        name = "Kitchen",
+        next = <3>,
+        prev = <1>,
+        weapon = "Knife"
+    },
+    {
+        name = "Lounge",
+        next = <4>,
+        prev = <2>,
+        weapon = "Poison"
+    },
+    {
+        name = "Bedroom",
+        next = <1>,
+        prev = <3>,
+        weapon = "Garrotte"
+    }
 ]
 ```
 `rooms` is an array printed without showing the indices.
@@ -307,30 +307,30 @@ end
 With this change, `print(pretty(rooms))` gives:
 ```txt
 [
- 1 = {
- name = "Library",
- next = <2>,             # <1>
- prev = <4>,
- weapon = "Lead Pipe"
- },
- 2 = {
- name = "Kitchen",
- next = <3>,
- prev = <1>,
- weapon = "Knife"
- },
- 3 = {
- name = "Lounge",
- next = <4>,
- prev = <2>,
- weapon = "Poison"
- },
- 4 = {
- name = "Bedroom",
- next = <1>,
- prev = <3>,
- weapon = "Garrotte"
- }
+    1 = {
+        name = "Library",
+        next = <2>,             # <1>
+        prev = <4>,
+        weapon = "Lead Pipe"
+    },
+    2 = {
+        name = "Kitchen",
+        next = <3>,
+        prev = <1>,
+        weapon = "Knife"
+    },
+    3 = {
+        name = "Lounge",
+        next = <4>,
+        prev = <2>,
+        weapon = "Poison"
+    },
+    4 = {
+        name = "Bedroom",
+        next = <1>,
+        prev = <3>,
+        weapon = "Garrotte"
+    }
 ]
 ```
 1. The path reference `<2>` now makes perfect sense.
@@ -338,25 +338,25 @@ With this change, `print(pretty(rooms))` gives:
 Here's what we get for `print(alt(rooms))`:
 ```txt
 1:
- name: "Library",
- next: <2>,
- prev: <4>,
- weapon: "Lead Pipe",
+    name: "Library",
+    next: <2>,
+    prev: <4>,
+    weapon: "Lead Pipe",
 2:
- name: "Kitchen",
- next: <3>,
- prev: <1>,
- weapon: "Knife",
+    name: "Kitchen",
+    next: <3>,
+    prev: <1>,
+    weapon: "Knife",
 3:
- name: "Lounge",
- next: <4>,
- prev: <2>,
- weapon: "Poison",
+    name: "Lounge",
+    next: <4>,
+    prev: <2>,
+    weapon: "Poison",
 4:
- name: "Bedroom",
- next: <1>,
- prev: <3>,
- weapon: "Garrotte"
+    name: "Bedroom",
+    next: <1>,
+    prev: <3>,
+    weapon: "Garrotte"
 ```
 This output is also very readable.
 

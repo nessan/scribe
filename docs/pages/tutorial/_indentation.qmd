@@ -3,12 +3,12 @@
 Earlier, we alluded that while our solution does *something* for nested sub-tables by recursion, it certainly gets indentation screwed up in the process.
 
 Suppose we introduce a table that captures Minnie's "user profile" and try to print it:
-```
+```lua
 local user =
 {
- first = "Minnie",
- last = "Mouse",
- friends = { "Mickey", "Goofy" }     -- <1>
+    first = "Minnie",
+    last = "Mouse",
+    friends = { "Mickey", "Goofy" }     -- <1>
 }
 ```
 1. Minnie's friends are captured in an array.
@@ -16,12 +16,12 @@ local user =
 Then, `print(pretty(user))` might yield:
 ```txt
 {
- first = Minnie,
- friends = [         # <1>
- Mickey,
- Goofy
+    first = Minnie,
+    friends = [         # <1>
+    Mickey,
+    Goofy
 ],
- last = Mouse
+    last = Mouse
 }
 ```
 1. We see `friends` as a nice array, but the indentation is incorrect.
@@ -29,12 +29,12 @@ Then, `print(pretty(user))` might yield:
 Ideally, we'd like to see:
 ```txt
 {
- friends = [
- Mickey,
- Goofy
- ],
- first = Minnie,
- last = Mouse
+    friends = [
+        Mickey,
+        Goofy
+    ],
+    first = Minnie,
+    last = Mouse
 }
 ```
 
@@ -140,12 +140,12 @@ end
 With those changes, we can call `print(pretty(user))` and get:
 ```txt
 {
- friends =     [
- Mickey,
- Goofy
- ],
- last = Mouse,
- first = Minnie
+    friends =     [
+        Mickey,
+        Goofy
+    ],
+    last = Mouse,
+    first = Minnie
 }
 ```
 The elements in the `friends` array are now indented correctly, but the opening brace is also indented.
@@ -174,12 +174,12 @@ end
 With those changes, we can call `print(pretty(user))` and get:
 ```txt
 {
- friends = [
- Mickey,
- Goofy
- ],
- last = Mouse,
- first = Minnie
+    friends = [
+        Mickey,
+        Goofy
+    ],
+    last = Mouse,
+    first = Minnie
 }
 ```
 The inline format `print(inline(user))` is also correct:

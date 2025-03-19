@@ -12,21 +12,19 @@ stars.c1.next = stars.c2
 Then `print(pretty(stars))` returns:
 ```txt
 {
- c1 =
- {
- next =
- {
- first = Minnie,
- last = Mouse
- },
- first = Mickey,
- last = Mouse
- },
- c2 =
- {
- first = Minnie,
- last = Mouse
- }
+    c1 =
+    {
+        next = {
+            first = Minnie,
+            last = Mouse
+        },
+        first = Mickey,
+        last = Mouse
+    },
+    c2 = {
+        first = Minnie,
+        last = Mouse
+    }
 }
 ```
 We see two definitions of `c2`! <br>
@@ -134,16 +132,16 @@ end
 Now, if you try `print(pretty(stars))` on our doubly linked list of stars, you get something like this:
 ```txt
 {
- c1 = {
- first = "Mickey",
- last = "Mouse",
- next = {
- first = "Minnie",
- last = "Mouse",
- prev = 0x600002ec0ec0
- }
- },
- c2 = 0x600002ec0f00,
+    c1 = {
+        first = "Mickey",
+        last = "Mouse",
+        next = {
+            first = "Minnie",
+            last = "Mouse",
+            prev = 0x600002ec0ec0
+        }
+    },
+    c2 = 0x600002ec0f00,
 }
  ```
 1. The shared references are just table addresses, which isn't user-friendly but better than crashing!
@@ -155,17 +153,17 @@ stars.home = stars
 Then `print(pretty(stars))` yields:
 ```txt
 {
- c1 = {
- first = "Mickey",
- last = "Mouse",
- next = {
- first = "Minnie",
- last = "Mouse",
- prev = 0x6000012ecec0
- }
- },
- c2 = 0x6000012ecf00,
- home = 0x6000012ece80
+    c1 = {
+        first = "Mickey",
+        last = "Mouse",
+        next = {
+            first = "Minnie",
+            last = "Mouse",
+            prev = 0x6000012ecec0
+        }
+    },
+    c2 = 0x6000012ecf00,
+    home = 0x6000012ece80
 }
 ```
 
@@ -186,18 +184,16 @@ This is the best option.
 Then, in the case where there is no self-reference, we might see:
 ```txt
 {
- c2 =
- {
- first = Minnie,
- prev =
- {
- first = Mickey,
- next = <c1>,        # <1>
- last = Mouse
- },
- last = Mouse
- },
- c1 = <c2.prev>              # <2>
+    c2 = {
+        first = Minnie,
+        prev = {
+            first = Mickey,
+            next = <c1>,        # <1>
+            last = Mouse
+        },
+        last = Mouse
+    },
+    c1 = <c2.prev>              # <2>
 }
 ```
 1. The value of `next` refers to the table at the path `c1`.
@@ -209,19 +205,17 @@ Thus, `foo` is a sub-table of `tbl`, `bar` is a sub-table of `foo`, and `baz` is
 If there is a self-reference, such as `stars.home = stars`, we might see:
 ```txt
 <table> = {                 # <1>
- c2 =
- {
- first = Minnie,
- prev =
- {
- first = Mickey,
- next = <c1>,    # <2>
- last = Mouse
- },
- last = Mouse
- },
- c1 = <c2.prev>,
- home = <table>          # <3>
+    c2 = {
+        first = Minnie,
+        prev = {
+            first = Mickey,
+            next = <c1>,    # <2>
+            last = Mouse
+        },
+        last = Mouse
+    },
+    c1 = <c2.prev>,
+    home = <table>          # <3>
 }
 ```
 1. We only put out the `<table> = ...` line **if** there is a self-reference.
@@ -327,19 +321,17 @@ end
 Now, if you try `print(pretty(stars))` on our doubly linked list of stars, we get:
 ```txt
 {
- c1 =
- {
- first = Mickey,
- last = Mouse,
- next =
- {
- first = Minnie,
- last = Mouse,
- prev = <table.c1>    # <1>
- }
- },
- c2 = <table.c1.next>,
- home = <table>               # <2>
+    c1 = {
+        first = Mickey,
+        last = Mouse,
+        next = {
+            first = Minnie,
+            last = Mouse,
+            prev = <table.c1>    # <1>
+        }
+    },
+    c2 = <table.c1.next>,
+    home = <table>               # <2>
 }
 ```
 1. The value of `prev` refers to the path `table.c1`.
@@ -434,19 +426,17 @@ end
 Here's the output from the latest version of `print(pretty(stars))`:
 ```txt
 <table> = {                # <1>
- c1 =
- {
- first = Mickey,
- last = Mouse,
- next =
- {
- first = Minnie,
- last = Mouse,
- prev = <c1>
- }
- },
- c2 = <c1.next>,         # <2>
- home = <table>          # <3>
+    c1 = {
+        first = Mickey,
+        last = Mouse,
+        next = {
+            first = Minnie,
+            last = Mouse,
+            prev = <c1>
+        }
+    },
+    c2 = <c1.next>,         # <2>
+    home = <table>          # <3>
 }
 ```
 1. There is a self-reference to the `stars` parent table, so we have prepended the string with `<table> = `.
@@ -456,18 +446,16 @@ Here's the output from the latest version of `print(pretty(stars))`:
 If we remove the `stars.home = stars` assignment then `print(pretty(stars))` returns:
 ```txt
 {                          # <1>
- c1 =
- {
- next =
- {
- first = Minnie,
- prev = <c1>,
- last = Mouse
- },
- first = Mickey,
- last = Mouse
- },
- c2 = <c1.next>
+    c1 = {
+        next = {
+            first = Minnie,
+            prev = <c1>,
+            last = Mouse
+        },
+        first = Mickey,
+        last = Mouse
+    },
+    c2 = <c1.next>
 }
 ```
 1. There is no self-reference, so we do not need that `<table> = ` we saw earlier.

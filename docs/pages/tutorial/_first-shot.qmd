@@ -42,8 +42,8 @@ We'll come back to that problem shortly.
 You try it out on our little mouse by calling `print(table_string(mouse))`, which returns:
 ```txt
 {
- first = Minnie,
- last = Mouse,       # <1>
+    first = Minnie,
+    last = Mouse,       # <1>
 
 }
 ```
@@ -53,8 +53,8 @@ Overall, it’s not bad!
 There is that extra comma and new line that looks a bit off, and of course, if you run that `print(table_string(mouse))` a few times, you will see that the print order of the elements changes:
 ```txt
 {
- last = Mouse,
- first = Minnie,     # <1>
+    last = Mouse,
+    first = Minnie,     # <1>
 
 }
 ```

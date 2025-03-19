@@ -3,7 +3,7 @@
 Although our current output string is flawed, nonetheless, it highlights the general structure for any table:
 ```txt
 table-begin-delimiter
- content
+    content
 table-end-delimiter
 ```
 In our first attempt, the `table_begin` and `table_end` delimiters are the opening and closing braces surrounding the table content.
@@ -12,9 +12,9 @@ The table delimiters should be user-configurable.
 The table content is a sequence of zero or more *elements*:
 ```txt
 table-begin-delimiter
- element,
- element,
- ...
+    element,
+    element,
+    ...
 table-end-delimiter
 ```
 
@@ -69,8 +69,8 @@ However, it is a step towards the goal of supporting many different output forma
 If we set `key_begin` and `key_end` to `'"'` and `'": '` respectively, we get:
 ```txt
 {
- "last": Mouse,
- "first": Minnie,
+    "last": Mouse,
+    "first": Minnie,
 
 }
 ```

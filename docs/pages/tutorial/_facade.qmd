@@ -146,23 +146,23 @@ The `my_options` table is complete as far as `table_string` is concerned.
 We can inspect it by a call to `print(classic(my_options))` which will output:
 ```txt
 {
- COMPLETE = true,            # <1>
- array_begin = "[",
- array_end = "]",
- comparator = <function>,    # <2>
- indent = "  ",              # <3>
- inline_size = inf,          # <4>
- inline_spacer = " ",
- key_begin = "",
- key_end = " = ",
- path_begin = "<",
- path_end = ">",
- path_root = "table",
- path_sep = ".",
- sep = ",",
- show_indices = false,
- table_begin = "{",
- table_end = "}"
+    COMPLETE = true,            # <1>
+    array_begin = "[",
+    array_end = "]",
+    comparator = <function>,    # <2>
+    indent = "  ",              # <3>
+    inline_size = inf,          # <4>
+    inline_spacer = " ",
+    key_begin = "",
+    key_end = " = ",
+    path_begin = "<",
+    path_end = ">",
+    path_root = "table",
+    path_sep = ".",
+    sep = ",",
+    show_indices = false,
+    table_begin = "{",
+    table_end = "}"
 }
 ```
 1. The `COMPLETE` field is present and set to `true`,; all the other fields are present and mostly set to the default values from the `options.pretty` table.
@@ -232,8 +232,8 @@ print(classic(user, { indent = '        ' }))
 Output:
 ```txt
 {
- first = "Minnie",
- last = "Mouse",
- friends = { "Mickey", "Goofy" }
+    first = "Minnie",
+    last = "Mouse",
+    friends = { "Mickey", "Goofy" }
 }
 ```
