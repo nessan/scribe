@@ -1,0 +1,166 @@
+## Inlining Simple Sub-Tables
+
+A nice feature of some pretty-printers is the ability to inline "simple" sub-tables.
+This option can make the output more readable and compact.
+
+Of course, we need to define what "simple" means.
+It could be a small table that fits inside a set number of characters.
+Or it could be a table with a certain number of elements.
+
+For our purposes, we will consider a table "simple" if it has no sub-tables.
+We will also add an optional limit on the number of elements to this definition.
+
+We can alter our `metadata` function to return the number of sub-tables in a table:
+```lua
+local function metadata(tbl)
+    local size = 0
+    local array = true
+    local subs = 0                                                      -- <1>
+    for _, v in pairs(tbl) do
+        size = size + 1
+        if array and tbl[size] == nil then array = false end
+        if type(v) == 'table' then subs = subs + 1  end                 -- <2>
+    end
+    local md = { size = size, array = array, subs = subs }              -- <3>
+    return md                                                           -- <4>
+end
+```
+1. `subs` will be the number of sub-tables.
+2. If we find a sub-table, we increment `subs`.
+3. Instead of returning three values, we create a table with three fields.
+4. We return the metadata table.
+
+If you haven't seen this coding style before, the `md` table is created with a *table constructor*.
+It is a shorthand way to create a table with some initial values.
+Assignments of the form `tbl = { x = x }` look odd, but they are a common idiom in Lua.
+The assignment is shorthand for `tbl[x] = x` where the `x` key is a string, and the `x` value can be any type.
+
+We can now use the `subs` field in our `table_string` method to decide whether to inline a sub-table.
+
+However, whether or not to inline simple tables should also be user-configurable.
+To accommodate that, we can add another field to our options table.
+```lua
+local options = {}
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' ',
+    show_indices  = false,
+    comparator    = compare,
+    inline_size   = math.huge                    -- <1>
+}
+
+options.classic = table_clone(options.pretty)
+options.classic.array_begin     = '{'
+options.classic.array_end       = '}'
+options.classic.inline_size     = 0             -- <2>
+```
+1. A simple table will be inlined if it has no sub-tables and strictly fewer than `inline_size ` elements.
+2. In the `classic` format, we never inline simple tables.
+
+So, by default, simple tables are always inlined in the `pretty` format and never in the `classic` format.
+If you set `inline_size` to `6` in the `pretty` format, we inline simple tables if they have fewer than six elements.
+
+Given our current setup, it only takes a small tweak to our existing code to accommodate this new feature:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local md = metadata(tbl)                                            -- <1>
+    local size   = md.size                                              -- <2>
+    local array  = md.array
+    local simple = md.subs == 0 and md.size <  options.inline_size      -- <3>
+
+    if size == 0 then return empty_table_string(opts) end
+    local show_keys = not array and true or opts.show_indices
+
+    local tb     = array and opts.array_begin or opts.table_begin
+    local te     = array and opts.array_end or opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = simple and '' or opts.indent                         -- <4>
+    local nl     = indent == '' and opts.inline_spacer or '\n'
+    local delims = tb ~= ''
+
+    sep = sep .. nl
+    if delims then tb, te = tb .. nl, nl .. te  else indent = '' end
+
+    local content = ''
+    local i = 0
+    local iter = array and ipairs or ordered_pairs(opts.comparator)
+    for k, v in iter(tbl) do
+        i = i + 1
+        local k_string = show_keys and kb .. tostring(k) .. ke or ''
+        local v_string = ''
+        if type(v) == 'table' then
+            v_string = table_string(v, opts)
+            v_string = indent_string(v_string, opts.indent, delims)
+            if delims == false and show_keys then v_string = nl .. v_string end
+        else
+            v_string = simple_string(v)
+        end
+        content = content .. indent .. k_string .. v_string
+        if i < size then content = content .. sep end
+    end
+    return tb .. content .. te
+end
+```
+1. `metadata` returns a table instead of a couple of values.
+2. Extract the `size` and `array` values from the `md` table.
+3. If there are no sub-tables *and* the table is small enough, we consider it simple.
+4. This is the only change needed to incorporate that new metadata about `tbl`.
+
+Looking at `print(pretty(user))` we get:
+```txt
+{
+    first = "Minnie",
+    friends = [ "Mickey", "Goofy" ],        # <1>
+    last = "Mouse"
+}
+```
+1. Now, the `friends` array is printed inline as it has no sub-tables.
+
+A more interesting example is:
+```lua
+local matrix = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} }
+```
+The `print(classic(matrix))` gives:
+```txt
+{
+    {
+        1,
+        2,
+        3
+    },
+    {
+        4,
+        5,
+        6
+    },
+    {
+        7,
+        8,
+        9
+    }
+}
+```
+With our tweaks `print(pretty(matrix))` yields a much more readable:
+```txt
+[
+    [ 1, 2, 3 ],
+    [ 4, 5, 6 ],
+    [ 7, 8, 9 ]
+]
+```
+And `print(alt(matrix))` yields
+```txt
+    1, 2, 3,
+    4, 5, 6,
+    7, 8, 9
+```

@@ -1,0 +1,389 @@
+---
+title: Pre-canned "Standard" Formatting Options
+---
+
+## Introduction
+
+Scribe provides pre-canned sets of formatting options used to output tables in various "standard" ways:
+
+Option Table                                             | Corresponding Method
+-------------------------------------------------------  | ------------------------------------------
+[`scribe.options.inline`](#inline-options)               | {scribe.inline}
+[`scribe.options.pretty`](#pretty-options)               | {scribe.pretty}
+[`scribe.options.classic`](#classic-options)             | {scribe.classic}
+[`scribe.options.alt`](#alt-options)                     | {scribe.alt}
+[`scribe.options.json`](#json-options)                   | {scribe.json}
+[`scribe.options.inline_json`](#inline_json-options)     | {scribe.inline_json}
+[`scribe.options.debug`](#debug-options)                 | {scribe.debug}
+[`scribe.options.default`](#default-options)             | The default options to use for calls like `scribe(obj)`
+: {.bordered .striped .hover .responsive tbl-colwidths="[40,60]"}
+
+The detailed settings for each of the option tables are documented below.
+
+## Example Setup
+
+We will use some sample tables below.
+
+A simple array of values:
+```lua
+local fruits = {'Apple', 'Pear', 'Banana'}
+```
+
+A trivial "linked list" with a spurious self-reference under the `list.all` key:
+```lua
+local list = { person1 = { name = 'Alice' }, person2 = { name = 'Beth' } }
+list.person1.next = list.person2
+list.person2.prev = list.person1
+list.all = list
+```
+
+And finally, a table of the sort that might arise in an actual application:
+```lua
+local user_profile = {
+    name = "Bill",
+    preferences = {
+        notifications = "enabled",
+        privacy = {
+            share_location = false,
+            online_status  = "invisible"
+        }
+    },
+    friends = { "Tom", "Dick", "Harry" }
+}
+```
+
+## Inline Options
+
+This set of formatting options is used when you call `scribe.inline(tbl)`.
+
+It can be accessed as `scribe.options.inline` if you want to change a value.
+
+Option            | Value
+----------------- | -------------------------------------------------------------------------------
+`indent`          | `""`
+`table_begin`     | `{`
+`table_end`       | `}`
+`array_begin`     | `[`
+`array_end`       | `]`
+`inline_spacer`   | `" "`
+`key_begin`       | `""`
+`key_end`         | `" = "`
+`show_indices`    | `false`
+`sep`             | `, `
+`inline_size  `   | `math.huge`
+`comparator`      | Default sorts keys by type and value.
+`use_metatable`   | `true`
+`path_root`       | `"table"`
+`path_sep`        | `.`
+`path_begin`      | `<`
+`path_end`        | `>`
+: {.bordered .striped .hover .responsive tbl-colwidths="[30,70]"}
+
+NOTE: The thing that makes this produce one-line strings is the fact that the `indent` value is the empty string.
+Doing that will consistently produce table strings on a single line.
+
+For our examples above:
+```lua
+print("Inline Fruits:")
+print(scribe.inline(fruits), '\n')
+print("Inline User Profile:")
+print(scribe.inline(user_profile),  '\n')
+print("Inline Linked List:")
+print(scribe.inline(list))
+```
+We get the outputs:
+```txt
+Inline Fruits:
+[ "Apple", "Pear", "Banana" ]
+
+Inline User Profile:
+{ friends = [ "Tom", "Dick", "Harry" ], name = "Bill", preferences = { notifications = "enabled", privacy = { online_status = "invisible", share_location = false } } }
+
+Inline Linked List:
+<table> = { all = <table>, person1 = { name = "Alice", next = <person2> }, person2 = { name = "Beth", prev = <person1> } }
+```
+`fruits` is shown as a simple array in the numeric order of the indices in the array.
+The indices themselves aren’t shown.
+
+The linked list is also on one line.
+It uses *paths* for self-references like `list.all = <table>` where `<table>` refers to the `list` itself.
+Similarly, we see that `list.person1.next = <person2>`
+
+## Pretty Options
+
+This is the set of formatting options used when you call `scribe.pretty(tbl)`.
+
+It is a clone of [`scribe.options.inline,`](#inline-options), except that the `indent` field is four spaces.
+It can be accessed as `scribe.options.pretty` if you want to change a field.
+
+TIP: Any non-empty `indent` field value will produce multiline output.
+
+All arrays are *indented* elements surrounded by square brackets.
+Other tables are *indented* elements surrounded by curly braces.
+However, simple tables and arrays are still displayed on a single line.
+
+For our simplest array example:
+```lua
+print(scribe.pretty(fruits))
+```
+we get the inline output:
+```sh
+[ "Apple", "Pear", "Banana" ]
+```
+The `fruits` table is *simple* without any nested sub-tables or sub-arrays.
+
+For the more complex linked list case:
+```lua
+print(scribe.pretty(list))
+```
+We get the output:
+```txt
+<table> = {
+    all = <table>,
+    person1 = {
+        name = "Alice",
+        next = <person2>
+    },
+    person2 = {
+        name = "Beth",
+        prev = <person1>
+    }
+}
+```
+
+## Classic Options
+
+It is so named because it produces the typical look from many table-to-string conversion functions.
+Braces surround tables, and their elements are on separate lines, with the structure emphasised with indentation.
+
+Even our trivial array will get output on multiple lines from `print(scribe.classic(fruits))`:
+```txt
+{
+    "Apple",
+    "Pear",
+    "Banana"
+}
+```
+
+This option set is a clone of [`scribe.options.inline,`](#inline-options) except that the `indent` field is four spaces and `inline_size` field is `0` so we never inline simple tables.
+
+It can be accessed as `scribe.options.classic` if you want to change a field.
+
+From `print(scribe.classic(user_profile))`, we get:
+```txt
+{
+    friends = {
+        "Tom",
+        "Dick",
+        "Harry"
+    },
+    name = "Bill",
+    preferences = {
+        notifications = "enabled",
+        privacy = {
+            online_status = "invisible",
+            share_location = false
+        }
+    }
+}
+```
+
+## Alt Options
+
+This is the set of formatting options used when you call `scribe.alt(tbl)`.
+The output is multiline, where all table and array structures are shown solely by indentation.
+There are no array or table delimiters.
+
+It can be accessed as `scribe.options.alt` if you want to change a value.
+
+Option            | Value
+----------------- | -------------------------------------------------------------------------------
+`indent`          | `"    "`
+`table_begin`     | `""`
+`table_end`       | `""`
+`array_begin`     | `""`
+`array_end`       | `""`
+`inline_spacer`   | `""`
+`key_begin`       | `"'"`
+`key_end`         | `": "`,
+`show_indices`    | `false`
+`sep`             | `,`
+`inline_size  `   | `0`
+`comparator`      | Default sorts keys by type and value.
+`use_metatable`   | `true`
+`path_root`       | `table`
+`path_sep`        | `.`
+`path_begin`      | `<`
+`path_end`        | `>`
+: {.bordered .striped .hover .responsive tbl-colwidths="[25,75]"}
+
+For our simple example:
+```lua
+print(scribe.alt(fruits))
+```
+We get the output:
+```sh
+"Apple", "Pear", "Banana"
+```
+For the more complex linked list:
+```lua
+print(scribe.alt(list))
+```
+We get the output:
+```sh
+<table> = all: <table>,
+person1:
+    name: "Alice",
+    next: <person2>,
+person2:
+    name: "Beth",
+    prev: <person1>
+```
+
+## JSON Options
+
+Scribe uses formatting options to tweak the string output for tables.
+
+Adding JSON output was just a matter of creating `scribe.options.json`:
+
+Option            | Value
+----------------- | -------------------------------------------------------------------------------
+`indent`          | `"    "`
+`table_begin`     | `{`
+`table_end`       | `}`
+`array_begin`     | `[`
+`array_end`       | `]`
+`extra_space`     | `" "`
+`key_begin`       | `'"'`
+`key_end`         | `'": '`
+`array_keys`      | `false`
+`sep`             | `,`
+`inline_size `    | `0`
+`comparator`      | Default sorts keys by type and value.
+`use_metatable`   | `true`
+`path_root`       | `table`
+`path_sep`        | `.`
+`path_begin`      | `<`
+`path_end`        | `>`
+: {.bordered .striped .hover .responsive tbl-colwidths="[30,70]"}
+
+JSON distinguishes between arrays shown as `[ ... ]` and non-arrays shown as `{ ... }`.
+It also surrounds keys with double quotes.
+
+From `print(scribe.json(user_profile))` we get:
+```txt
+{
+    "friends": [          # <1>
+        "Tom",
+        "Dick",
+        "Harry"
+    ],
+    "name": "Bill",
+    "preferences": {
+        "notifications": "enabled",
+        "privacy": {
+            "online_status": "invisible",
+            "share_location": false
+        }
+    }
+}
+```
+1. Unlike the other non-array tables, the `friends` array is surrounded by square brackets.
+
+## Inline JSON Options
+
+We also supply `scribe.options.inline_json`, which is similar except that the `indent` field is the empty string, so the output will always be on a single line.
+
+It also tweaks the delimiters to minimise the use of white space.
+
+From `print(scribe.inline_json(user_profile))`, we get:
+```txt
+{"friends":["Tom","Dick","Harry"],"name":"Bill","preferences":{"notifications":"enabled","privacy":{"online_status":"invisible","share_location":false}}}
+```
+This isn't all that readable, but it is as compact as possible and still follows JSON format guidelines.
+
+## Debug Options
+
+This is the set of formatting options used when you call `scribe.debug(tbl)`.
+It gives you a sense of how `scribe` views the internal structure of a table.
+It is not designed for everyday use but is useful when tweaking a custom set of formatting options.
+
+It can be accessed as `scribe.options.debug` if you want to change a value.
+
+Option            | Value
+----------------- | -------------------------------------------------------------------------------
+`indent`          | `' INDENT '`
+`table_begin`     | `'TABLE_BEGIN'`
+`table_end`       | `'TABLE_END'`
+`array_begin`     | `'ARRAY_BEGIN'`
+`array_end`       | `'ARRAY_END'`
+`inline_spacer`   | `' '`
+`key_left`        | `'KEY_BEGIN "'`
+`key_right`       | `'" KEY_END = '`
+`show_indices`    | `true`
+`sep`             | `' SEP '`
+`inline_size`     | `0`
+`comparator`      | Default sorts keys by type and value.
+`use_metatable`   | `true`
+`path_root`       | `table`
+`path_sep`        | `.`
+`path_begin`      | `<`
+`path_end`        | `>`
+: {.bordered .striped .hover .responsive tbl-colwidths="[25,75]"}
+
+For our simple example:
+```lua
+print(scribe.debug(fruits))
+```
+We get the output:
+```sh
+ARRAY_BEGIN
+ INDENT  KEY_BEGIN "1" KEY_END = "Apple" SEP
+ INDENT  KEY_BEGIN "2" KEY_END = "Pear" SEP
+ INDENT  KEY_BEGIN "3" KEY_END = "Banana"
+ARRAY_END
+ARRAY_BEGIN
+ INDENT  KEY_BEGIN "1" KEY_END = "Apple" SEP
+ INDENT  KEY_BEGIN "2" KEY_END = "Pear" SEP
+ INDENT  KEY_BEGIN "3" KEY_END = "Banana"
+ARRAY_END
+```
+For the more complex case:
+```lua
+print(scribe.debug(list))
+```
+We get the output:
+```txt
+<table> = TABLE_BEGIN
+ INDENT  KEY_BEGIN "all" KEY_END = <table> SEP
+ INDENT  KEY_BEGIN "person1" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "name" KEY_END = "Alice" SEP
+ INDENT  INDENT  KEY_BEGIN "next" KEY_END = <person2>
+ INDENT TABLE_END SEP
+ INDENT  KEY_BEGIN "person2" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "name" KEY_END = "Beth" SEP
+ INDENT  INDENT  KEY_BEGIN "prev" KEY_END = <person1>
+ INDENT TABLE_END
+TABLE_END
+```
+Tables, key-value pairs, and keys are all shown with explicit tokens for their start and end.
+
+We note that while there are some added newlines, you would still need to tweak this output in an editor to make it worthwhile.
+
+## Default Options
+
+This is the set of options used when you call `scribe(tbl)` without any second argument.
+By default, this is `scribe.options.inline`, which means `scribe(tbl)` returns a one-line string representation of `tbl`.
+
+You can change that to, say, a multiline string for all tables by:
+```lua
+ scribe.options.default = scribe.options.pretty
+```
+
+## See Also
+
+[Formatting Options](/pages/format-options.qmd)             <br>
+[Custom Options](/pages/custom-options.qmd)                 <br>
+[Object-to-String Conversions](/pages/stringification.qmd)  <br>
+[Formatted Output](/pages/formatted-output.qmd)             <br>
+[Turning the Tables ... ](/pages/tutorial/index.qmd)

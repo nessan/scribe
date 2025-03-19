@@ -1,0 +1,135 @@
+## Table Metadata
+
+Our current scheme computes each table's metadata on the fly.
+When we start our process with the root table, or when we recurse into a sub-table, we have the call to compute the metadata for the table that is currently under the microscope:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local md = metadata(tbl)    -- <1>
+    local size   = md.size
+    ...
+```
+1. The current table of interest is `tbl`. <br> `md(tbl)` returns a metadata table for `tbl`.
+
+However, tables can reference other tables and even have references to themselves.
+For example, we might build a website with Disney characters and have a gallery where visitors can flip from one star to the next and back to the previous one, etc.
+
+A doubly linked list is one data structure to model this type of interaction.
+In the most dumbed down, minimal version, we might have:
+```lua
+local stars =
+{
+    c1 = { first = "Mickey", last = "Mouse" },
+    c2 = { first = "Minnie", last = "Mouse" }
+}
+stars.c1.next = stars.c2
+stars.c2.prev = stars.c1
+stars.home = stars
+```
+Here, `c1`, `c2`, ... are characters.
+Each has a table of associated data (more realistically, a table of image links and the like).
+
+The characters are connected by their next and previous links.
+To cap it all, we have a "home" link back to the original table --- a self-reference.
+
+If you try `print(pretty(stars))` with our current implementation, the program will chase its tail and die of pure embarrassment at the rubbish state of `table_string`.
+
+Before we get to that, we will first alter our `metadata` function significantly.
+
+Instead of treating each table as it comes along and passing back some associated metadata, we will view the table as a whole entity in one go.
+
+Our current `metadata(tbl)` returns `md`, a table with three fields, `size`, `array` and `simple`, that tell you something about `tbl`.
+
+In our new implementation, `metadata(tbl)` will return `md` as a table of tables.
+If `t` is `tbl` itself *or* any sub-table of `tbl`, then
+
+Field          | Description
+-------------- | --------------------------------------------------------
+`md[t].size`   | The number of top-level elements in `t`.
+`md[t].array`  | This will be `true` if `t` is a Lua array, otherwise `false`.
+`md[t].subs`   | The number of sub-tables in `t`.
+
+Here is what our new call-it-once-and-be-done `metadata` function looks like:
+```lua
+local function metadata(tbl, md)                    -- <1>
+    md = md or {}                                   -- <2>
+    md[tbl] = {}                                    -- <3>
+    local size, array, subs = 0, true, 0
+    for _, v in pairs(tbl) do
+        size = size + 1
+        if array and tbl[size] == nil then array = false end
+        if type(v) == 'table' then
+            subs = subs + 1
+            if not md[v] then metadata(v, md) end   -- <4>
+        end
+    end
+    md[tbl].size  = size                            -- <5>
+    md[tbl].array = array
+    md[tbl].subs  = subs
+    return md
+end
+```
+1. We've added `md` to the calling signature. It will be missing on the first call.
+2. If `md` is completely missing, we set it up as an empty table.
+3. We set up `md[tbl]` as an empty sub-table of `md`.
+4. As we iterate through `tbl`, we may come across a new sub-table `v`, which is handled by recursion.
+5. Record the three bits of metadata for `tbl` in the `md[tbl]` sub-table.
+
+To use this new `metadata` method, we also need to alter `table_string`.
+That can be done a couple of different ways.
+One way to go is to make `table_string` a little wrapper around a recursive *closure* that does most of the work:
+```lua
+function table_string(root_tbl, opts)                           -- <1>
+    opts = opts or options.pretty
+    local md = metadata(root_tbl)                               -- <2>
+
+    local function process(tbl)                                 -- <3>
+        local size   = md[tbl].size                             -- <4>
+        if size == 0 then return empty_table_string(opts) end
+
+        local array  = md[tbl].array
+        local show_keys = not array and true or opts.show_indices
+
+        local simple = md[tbl].subs == 0 and size < opts.inline_size
+        local indent = simple and '' or opts.indent
+
+        local tb     = array and opts.array_begin or opts.table_begin
+        local te     = array and opts.array_end or opts.table_end
+        local kb, ke = opts.key_begin, opts.key_end
+        local nl     = indent == '' and opts.inline_spacer or '\n'
+        local sep    = opts.sep .. nl
+
+        local delims = tb ~= ''
+        if delims then tb, te = tb .. nl, nl .. te  else indent = '' end
+
+        local content = ''
+        local i = 0
+        local iter = array and ipairs or ordered_pairs(opts.comparator)
+        for k, v in iter(tbl) do
+            i = i + 1
+            local k_string = show_keys and kb .. tostring(k) .. ke or ''
+            local v_string = ''
+            if type(v) == 'table' then
+                v_string = process(v)                           -- <5>
+                v_string = indent_string(v_string, opts.indent, delims)
+                if delims == false and show_keys then v_string = nl .. v_string end
+            else
+                v_string = simple_string(v)
+            end
+            content = content .. indent .. k_string .. v_string
+            if i < size then content = content .. sep end
+        end
+        return tb .. content .. te
+    end
+
+    local retval = process(root_tbl)                                -- <6>
+    return retval
+end
+```
+1. Now, `table_string` is primarily a wrapper around the inner `process` function. <br> We have changed the first argument to `root_tbl` to clarify that this is the root table.
+2. We compute the root table `root_tbl` metadata and store it in `md`.
+3. The `process` function is a *closure* and can access the *enclosed* `md` table.
+4. `md[tbl]` is a sub-table, currently with three fields, `size`, `array` and `simple`.
+5. If we hit a sub-table, we recurse using `process`. The `md` table does not need recomputing and continues to be available as we process `v`.
+6. Most of the source lines in `table_string` are in the private `process` sub-function. We have `md` and get the ball rolling by running `process` on `root_tbl`.

@@ -1,0 +1,316 @@
+## The `scribe` Module
+
+In Lua, if you have a file where you set:
+```lua
+answer = 42
+```
+You are creating a *global* variable `answer` with the value `42`.
+This means that `answer` is available to all other Lua files that are loaded after this one.
+
+On the other hand, if you write:
+```lua
+local answer = 42
+```
+You are creating a *local* variable `answer` that is only available in the current file.
+
+The same thing applies to functions.
+If you write:
+```lua
+function bump(a)
+    answer = 42
+    return a + answer
+end
+```
+Then `bump` is a *global* function that can be called from any other Lua file.
+Moreover, even though `answer` is set in the `bump` function, it is a *global* variable that can be accessed and modified from anywhere.
+
+On the other hand, if you write:
+```lua
+local function bump(a)
+    local answer = 42
+    return a + answer
+end
+```
+Then `bump` is a *local* function that can only be called from within the current file.
+`answer` is a *local* variable that can only be accessed and modified within the function `bump`.
+
+Prepending `local` to variables and functions confines them to the enclosing scope.
+
+This is a good practice because it reduces the chance of inadvertently modifying variables or functions that are used elsewhere.
+It also makes the intent of the code much clearer.
+
+In general, you should always use `local` unless you have a good reason not to.
+
+NOTE: In Lua, the `local` keyword is used to declare variables and functions as local to the block in which they are declared.
+I suspect that, with the benefit of hindsight, Lua's designers would choose to make `local` the default and added some other  keyword to make variables `global`.
+You will have many more `local` variables than `global` ones in your code, so that switch would be very beneficial.
+However, that is not the way Lua is designed, so you must remember to use `local` to keep your code clean and maintainable.
+
+We have been fairly careful to use `local` in our code to this point.
+
+### Modules
+
+There is a further level of encapsulation that we have not yet discussed: *modules*.
+
+A module is a collection of functions and variables that are grouped together in a single Lua table.
+The table is returned by the module and can be used to access the functions and variables within it.
+
+Here is a simple example of a module in a file called `answer.lua`:
+```lua
+local M = {}                    -- <1>
+
+local answer = 42               -- <2>
+
+function M.bump(a)              -- <3>
+    return a + answer
+end
+
+return M                        -- <4>
+```
+1. We create a local table `M` to hold our module. <br> The name `M` is a common convention and has nothing to do with how the module is stored or used.
+2. `answer` is a local variable that is only accessible within the module (within `answer.lua`).
+3. We define a function `bump` *within* the module. It will become publicly accessible.
+4. We export the module at the end of the file where it's defined. <br> The `return M` statement makes the module available to any other Lua file that `require`s it.
+
+To use the module in another file, you would write:
+```lua
+local answer = require 'answer' -- <1>
+print(answer.bump(10))          -- <2>
+```
+1. `require` is a built-in Lua function that loads a module and returns the table that the module exports.
+2. We call the `bump` function from the `answer` module to print 52.
+
+Notice that the `answer` module is a self-contained unit.
+It has its own local variables (and potentially local functions) that are *private* and not accessible from outside the module.
+The only way to interact with the module is through the functions and variables that it exports.
+Generally, the only thing that a module exports is a table that contains the functions and variables that you want to make available to the outside world.
+What you call the module internally is up to you, but the convention is to use `M`.
+
+Typically, the user of the module will import the module into a local variable with the same name as the module's file (without the `.lua` extension) though that is not a requirement.
+
+Modules are a powerful way to organize your code and keep it clean and maintainable.
+
+### The `scribe` Module
+
+Here is a sketch of how we can turn our current code into a module defined in a file called `scribe.lua`:
+```lua
+local M = {}                                                        -- <1>
+
+local function indent_string(str, indent, ignore_first_line)        -- <2>
+    ...
+end
+
+local function compare(a, b)              ... end
+local function ordered_pairs(comparator)             ... end
+local function simple_string(obj)                    ... end
+local function empty_table_string(opts)              ... end
+local function metadata(root_tbl)                    ... end
+local function table_string(root_tbl, opts)          ... end
+local function table_clone(tbl)                      ... end
+local function complete_options_table(options, from) ... end
+
+M.options = {}                                                      -- <3>
+
+M.options.pretty      = { ... }                                     -- <4>
+M.options.inline      = table_clone(M.options.pretty)               -- <5>
+...
+M.options.classic     = table_clone(M.options.pretty)
+...
+M.options.alt         = table_clone(M.options.pretty)
+...
+M.options.json        = table_clone(M.options.pretty)
+...
+M.options.inline_json = table_clone(M.options.json)
+...
+M.options.debug       = table_clone(M.options.pretty)
+...
+M.options.default     = M.options.inline
+...
+
+function M.scribe(obj, opts, overrides)                             -- <6>
+    if type(obj) ~= 'table' then return simple_string(obj) end
+
+    if opts == nil then return table_string(obj, M.options.default) end
+
+    if not opts.COMPLETE then
+        local from = opts.indent == '' and M.options.inline or M.options.pretty
+        complete_options_table(opts, from)
+    end
+    if overrides == nil then return table_string(obj, opts) end
+
+    if not overrides.COMPLETE then complete_options_table(overrides, opts) end
+    return table_string(obj, overrides)
+end
+
+function M.pretty(tbl, overrides)                                   -- <7>
+    return M.scribe(tbl, M.options.pretty, overrides)
+end
+
+function M.inline(tbl, overrides)       ... end
+function M.classic(tbl, overrides)      ... end
+function M.alt(tbl, overrides)          ... end
+function M.json(tbl, overrides)         ... end
+function M.inline_json(tbl, overrides)  ... end
+function M.debug(tbl, overrides)        ... end
+
+return M                                                            -- <8>
+```
+1. We create a local table `M` to hold our module. <br> It will contain all of the functions and variables that we want to export.
+2. We define all the private helper functions that we need for our module. <br> These functions are declared as `local` and are not accessible from outside the module.
+3. We create a table `M.options` to hold all of the options that we will use in our module. <br> These will all be accessible from the outside as we want the user to be able to modify them.
+4. Where before we had `options.pretty = { ... }`, we now have `M.options.pretty = { ... }`.
+5. And so on for the other tables of formatting parameters.
+6. The main `scribe` function is now a member of the module. <br> It is shown in full so you can see how it uses both public options data and private helper functions.
+7. This is true for all our convenience facade functions, like `pretty`, `inline`, `classic`, etc.
+8. We finish by *exporting* the module by returning the table `M`.
+
+Here is how you would use the `scribe` module in another file:
+```lua
+local scribe = require 'scribe'         -- <1>
+print(scribe.pretty({a = 1, b = 2}))    -- <2>
+```
+1. We import the `scribe` module into a local variable `scribe`.
+2. We call the `classic` function from the module to print a nicely formatted table.
+
+This yields:
+```txt
+{
+    a = 1,
+    b = 2
+}
+```
+
+### A Little Bonus
+
+Once you've loaded the `scribe` module, you can access the `pretty` function as `scribe.pretty` and so on.
+If you care about using the `pretty` function a lot, you can make it available as a local variable in your file:
+```lua
+local scribe = require 'scribe'
+local pretty = scribe.pretty
+local inline = scribe.inline
+```
+It would also be nice to have a shorthand for `scribe.scribe`.
+
+We add a `__call` metamethod to the `scribe` table to do that.
+Lua calls this metamethod when you treat the table as a function (i.e. when you use `scribe(...)`).
+
+Metamethods do not go in the module table itself.
+Instead, you give the module table a metatable that contains the metamethods.
+This extra level can seem confusing to judge by the number of questions about it on the internet.
+
+In our case, we add the `__call` metamethod to the metatable of the `scribe` module as follows:
+```lua
+local mt = {}                                               -- <1>
+function mt.__call(_, ...) return M.scribe(...) end         -- <2>
+setmetatable(M, mt)                                         -- <3>
+
+return M
+```
+1. Start with an ordinary empty table `mt`.
+2. Add the `__call` metamethod to the table. <br> The first argument to the metamethod is the table itself, but we don't need it so we use `_`. <br> The `...` collects all the arguments passed to the function.
+3. We endow our module table `M` with the metatable `mt` that contains the metamethods.
+
+You can use `_` as a placeholder for any argument you don't need.
+Also, note that `...` is a special variable that collects all the arguments passed to a function and forwards them unchanged.
+
+With that addition, you can now use `scribe` as a function:
+```lua
+local scribe = require 'scribe'
+print(scribe({a = 1, b = 2}))
+```
+This will print the same table as before: `{a = 1, b = 2}`.
+
+### `require` Gotcha
+
+`require` is a built-in Lua function that loads a module and returns whatever the module exports.
+
+It looks for the module's source file using Lua's `package.path` variable.
+This is a long string of directories that Lua searches for files when you `require` them.
+The different directories in `package.path` are separated by semicolons.
+
+Running Lua from the command line and typing:
+```lua
+print(package.path)
+```
+I get something like:
+```txt
+/usr/local/share/lua/5.4/?.lua;             # <1>
+/usr/local/share/lua/5.4/?/init.lua;
+/usr/local/lib/lua/5.4/?.lua;
+/usr/local/lib/lua/5.4/?/init.lua;
+./?.lua;                                    # <2>
+./?/init.lua
+```
+1. Actually, the output is on a single line, but I have broken it up for clarity.
+2. The `.` refers to the current directory.
+
+The first four entries are the system directories where Lua looks for modules.
+Those were set when Lua was installed.
+The `./?.lua` entry tells Lua to also look for modules in the "current" directory.
+
+By the way, the `?` is a wildcard that Lua replaces with the file name you are searching for.
+
+With this setup you drop the `scribe.lua` in the same directory as your main Lua file and you can `require` it.
+Everything will work fine.
+
+However, these days you are quite likely to run Lua from an IDE or perhaps via a plugin in another application.
+For example, I sometimes run Lua from {ZeroBrane} which is a free lightweight IDE for Lua with a a full featured debugger (it's cross-platform and highly recommended).
+Other times I run Lua from {VSCode} with the {VSCode-Lua} extension.
+
+In both these cases, the current directory is not the directory where your Lua files are!
+Instead, it is the directory where the IDE or plugin is installed.
+
+When you run Lua from these environments, you will get an error when you try to `require` a module in the same directory as your main Lua file.
+The error will be something like:
+```txt
+module 'scribe' not found:
+    no field package.preload['scribe']
+    no file './scribe.lua'                              # <1>
+    no file '/usr/local/share/lua/5.4/scribe.lua'
+    no file '/usr/local/share/lua/5.4/scribe/init.lua'
+    ...
+```
+1. This `no file` line will make you scratch your head!
+
+It appears that Lua is looking for `./scribe.lua` and not finding it even though it is clearly in the same directory as your main Lua file.
+You'll probably double and triple check the file is there and that you have spelled the name correctly.
+Nothing will help.
+
+The confusion arises because you think `.` is the directory where your main Lua file is but the IDE or plugin sees it as the directory where the IDE or plugin is installed.
+
+The solution is to add the script's directory to `package.path`.
+You could hardcode that directory name and append it to `package.path` but that's clunky.
+If you change the directory structure of your project, you will have to remember to change the hardcoded path.
+
+Instead, you can use Lua's `debug` library to get the directory of the current source file.
+Here is how you can do that:
+```lua
+local source_dir = debug.getinfo(1, 'S').source:match [[^@?(.*[\/])[^\/]-$]]       -- <1>
+package.path = source_dir .. "?.lua;" .. package.path                              -- <2>
+```
+1. This magic incantation gets the directory of the current source file.
+2. This line appends the directory to `package.path`.
+
+You can put these lines at the top of your main Lua file and they will ensure that `require` works correctly.
+
+This isn't terribly elegant, but it is a portable way to ensure that your modules are found in the "current" directory when you run Lua from an IDE or plugin.
+
+### LuaRocks
+
+`scribe`, like many Lua modules, is available via LuaRocks.
+
+LuaRocks is the package manager for Lua modules and, when you install LuaRocks, it makes sure that any modules you install using it are available to Lua via `require`.
+It adds some LuaRocks standard directories to `package.path` so that Lua can find the modules.
+
+If you install `scribe` using LuaRocks, you won't have to worry about the `require` gotcha.
+LuaRocks will take care of everything for you.
+
+
+### Summary
+
+At this point we have a developed a production ready version of `scribe`.
+It produces readable outputs for complex tables with cyclical references.
+`scribe` also supports options for customizing the output in many ways.
+
+Our module also comes with pre-packaged styles for common output formats and simple to user-friendly functions for printing tables in those formats.
+For the most part, the user can just call `pretty` or `json`, etc. and get a good result without having to worry about the details.

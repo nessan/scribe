@@ -1,0 +1,122 @@
+# Metadata for this documentation project.
+# See https://quarto.orgcontent/reference/projects/websites.html
+project:
+  type: website
+  output-dir: _site
+
+# Extensions
+filters:
+  - simple-vars # simple variable references: `{name}` instead of `{{< var name >}}`
+  - admonitions # simpler callout blocks and alerts like AsciiDoc
+
+format:
+  html:
+    toc: true
+    toc-expand: true
+    code-copy: true
+    code-overflow: scroll
+    grid:
+      sidebar-width: 250px
+      body-width: 950px
+      margin-width: 200px
+      gutter-width: 1.5em
+    theme:
+      light:
+        - cosmo
+        - assets/css/theme.scss
+        - assets/css/extras.scss
+      dark:
+        - cosmo
+        - assets/css/theme.scss
+        - assets/css/dark.scss
+        - assets/css/extras.scss
+
+website:
+  title: "Scribe"
+  image: "assets/images/logo.png"
+  favicon: "assets/images/logo.png"
+  open-graph: true
+  site-url: "https://nessan.github.io/scribe"
+  repo-url: "https://github.com/nessan/scribe"
+  repo-subdir: docs
+  issue-url: "https://github.com/nessan/scribe/issues/new/choose"
+  repo-actions: [edit, issue]
+  page-navigation: true
+  bread-crumbs: false
+  back-to-top-navigation: true
+  page-footer:
+    left: |
+      &#169; 2025 Nessan &#8729; Made with [Quarto](https://quarto.org)
+    center:
+      - icon: github
+        href: "https://github.com/nessan/scribe"
+        aria-label: GitHub Repo
+      - icon: envelope
+        href: "mailto:nzznfitz+gh@icloud.com"
+        aria-label: EMail address
+    right: |
+      [MIT Licensed](https://opensource.org/license/mit)
+
+  navbar:
+    background: dark
+    logo: "assets/images/logo.png"
+    logo-alt: "The Scribe Logo"
+    title: Scribe
+    search: true
+    pinned: true
+    collapse-below: lg
+    left:
+      - text: "Home"
+        file: index.qmd
+      - text: "Stringification"
+        file: pages/stringification.qmd
+      - text: "Format Options"
+        file: pages/format-options.qmd
+      - text: "Standard Formats"
+        file: pages/standard-formats.qmd
+      - text: "Custom Formats"
+        file: pages/custom-options.qmd
+      - text: "Formatted Output"
+        file: pages/formatted-output.qmd
+      - text: "Tutorial"
+        file: pages/tutorial/index.qmd
+      - text: "More"
+        menu:
+          - text: "Project Repo"
+            icon: "github"
+            href: "https://github.com/nessan/scribe"
+          - text: "Report a Bug"
+            icon: "bug"
+            href: "https://github.com/nessan/scribe/issues"
+          - text: "Ask a Question"
+            icon: "chat-right-text"
+            href: "mailto:nzznfitz+gh@icloud.com"
+    tools:
+      - icon: github
+        href: "https://github.com/nessan/scribe"
+        text: GitHub repo
+  sidebar:
+    style: floating
+    type: light
+    background: light
+    align: left
+    collapse-level: 2
+    contents:
+      - text: Overview
+        href: index.qmd
+      - text: "Stringification"
+        href: pages/stringification.qmd
+      - text: "Format Options"
+        href: pages/format-options.qmd
+      - text: "Standard Formats"
+        file: pages/standard-formats.qmd
+      - text: "Custom Formats"
+        file: pages/custom-options.qmd
+      - text: "Formatted Output"
+        href: pages/formatted-output.qmd
+      - text: "Turning the Tables ..."
+        href: pages/tutorial/index.qmd
+
+editor:
+  markdown:
+    canonical: true

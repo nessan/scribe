@@ -1,0 +1,215 @@
+## Arrays vs. Tables
+
+Lua has one type of table.
+It can be an array, a dictionary, or a mix of both.
+Under the covers, Lua keeps the array part separate from the dictionary part for efficiency.
+
+Most programming languages have a distinct array type, and differentiating between arrays and dictionaries is often crucial.
+
+For example, JSON is a popular human-readable data exchange format with a separate array type.
+In JSON, arrays are always ordered and have implicit keys that are consecutive integers.
+They are represented by square brackets `[ ... ]`  to distinguish them from dictionaries represented by curly braces `{ ... }`.
+
+We can easily write a small function to determine whether a table is an array or a dictionary:
+```lua
+local function table_is_array(tbl)
+    local size = 0
+    for _,_ in pairs(tbl) do
+        size = size + 1
+        if tbl[size] == nil then return false end   -- <1>
+    end
+    return true                                     -- <2>
+end
+```
+1. Arrays are indexed by consecutive integers from 1. If we find a hole, we know that `tbl` is not an array.
+2. If we make it through the loop without finding a hole, we know that `tbl` is an array.
+
+If `tbl` is a Lua array, a complete pass through `tbl` is required to confirm it is an array.
+We can add the check to our existing `table_size` function, which we rename `metadata`:
+```lua
+local function metadata(tbl)
+    local size = 0
+    local array = true                                          -- <1>
+    for _,_ in pairs(tbl) do
+        size = size + 1
+        if array and tbl[size] == nil then array = false end    -- <2>
+    end
+    return size, array                                          -- <3>
+end
+```
+1. We assume `tbl` is an array until we find otherwise.
+2. If we find a "hole", then `tbl` is not an array.
+3. Return both the computed `size` and `array` values.
+
+NOTE: Lua functions can return multiple values.
+This feature can be handy, but you don't want to overdo it, as the function's caller needs to get the order of the returned values right.
+Correct ordering is not a problem for two or even three values.
+After that, it is best to put the returns in a name-value table.
+
+NOTE: We use `metadata` to indicate that we are returning more than the table size.
+We will add other bits of metadata as we go along.
+Do not confuse this with Lua's `metatable` concept, which allows you to override the behaviour standard operators like `+`, `-`, etc. and the behaviour of methods like `tostring`, `print`, etc.
+
+We can add some array delimiters to our option tables:
+```lua
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',            -- <1>
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' '
+}
+```
+1. We will differentiate arrays by using square bracket delimiters.
+
+Let's put the new `metadata` method to use in the main event:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local size, array = metadata(tbl)                                 -- <1>
+    if size == 0 then return empty_table_string(opts) end
+
+    local tb     = array and opts.array_begin or opts.table_begin     -- <2>
+    local te     = array and opts.array_end or opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+
+    local nl = indent == '' and opts.inline_spacer or '\n'
+    sep = sep .. nl
+    tb  = tb  .. nl
+    te  = nl  .. te
+
+    local content = ''
+    local i = 0
+    for k, v in pairs(tbl) do
+        i = i + 1
+        local k_string = kb .. tostring(k) .. ke
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, opts)
+        content = content .. indent .. k_string .. v_string
+        if i < size then content = content .. sep end
+    end
+    return tb .. content .. te
+end
+```
+1. `metadata` returns the size *and* the type `tbl`. <br> The order is fixed.
+2. We can pick suitable table delimiters depending on whether `tbl` is an array.
+
+Now `print(pretty(mouse))` returns:
+```txt
+{
+ last = Mouse,
+ first = Minnie
+}
+```
+while `print(pretty(friends))` returns:
+```txt
+[                       # <1>
+ 1 = Mickey,         # <2>
+ 2 = Goofy
+]
+```
+1. Arrays are now delimited with square brackets.
+2. However, we are outputting the array indices `1`, `2`, `...`, which is generally unnecessary.
+
+Lua has "keys" for *all* table elements.
+In the case of arrays, those keys are the array indices, which are consecutive integers starting at 1.
+You don't usually need to see those, so we alter our function only to show keys if `tbl` is not an array.
+```lua
+function table_string(tbl, opts)
+    ...
+    for k, v in pairs(tbl) do
+        ...
+        if not array then content = content .. kb .. tostring(k) .. ke end   -- <1>
+        ...
+    end
+    ...
+    return retval
+end
+```
+1. Now, we don't show keys for array tables.
+
+Now `print(pretty(friends))` returns:
+```txt
+[
+ Mickey,
+ Goofy
+]
+```
+The output from `print(pretty(mouse))` remains unchanged:
+```txt
+{
+ last = Mouse,
+ first = Minnie
+}
+```
+
+Sometimes, you need to see the "keys:” for an array.
+For example, if you are debugging and want to see the array indices.
+Let's add an option to show the keys for arrays:
+```lua
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' ',
+    show_indices  = false         -- <1>
+}
+```
+1. Typically, we suppress seeing array indices.
+
+The corresponding change to `table_string` is straightforward:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local size, array = metadata(tbl)
+    if size == 0 then return empty_table_string(opts) end
+    local show_keys = not array and true or opts.show_indices                -- <1>
+    ...
+    for k, v in pairs(tbl) do
+        i = i + 1
+        local k_string = show_keys and kb .. tostring(k) .. ke or ''            -- <2>
+        ...
+    end
+    ...
+    return retval
+end
+```
+1. We set `show_keys` to `true` unless we are dealing with an array, in which case we use whatever is dictated by `opts.show_indices`.
+2. We only show keys if `show_keys` is `true`. <br> That is always the case for non-arrays and is user-settable for arrays.
+
+With that change, `print(inline(friends))` returns `[ Mickey, Goofy ]`.
+If you set `opts.show_indices = true`, then `print(inline(friends))` returns `[ 1 = Mickey, 2 = Goofy ]`.
+
+Finally, let's add a couple of sets of formatting options that *don't* include separate array delimiters.
+This is the style you most often see in Lua code, so it is handy to have it available.
+```lua
+options.classic = table_clone(options.pretty)
+options.classic.array_begin = '{'                       -- <1>
+options.classic.array_end   = '}'
+
+function classic(tbl)                                   -- <2>
+    return table_string(tbl, options.classic)
+end
+```
+1. All tables use the same delimiters `{ ... }`.
+2. We add a convenience function, `classic`, that uses the `options.classic`.
+
+Now `print(classic(friends))` returns
+```txt
+{
+ Mickey,
+ Goofy
+}
+```

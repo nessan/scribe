@@ -1,0 +1,129 @@
+---
+title: Formatted Output
+---
+
+## Introduction
+
+Scribe has functions to create and print formatted strings.
+
+The functions build on Lua's {lua.string-format} capabilities by adding extra format specifiers for Lua tables.
+
+Method                     | Brief Description
+-------------------------  | ------------------------------------------------------------------------
+`scribe.format(fmt,...)`   | Builds a string from a template `fmt` along with trailing values that fill the *placeholders* in `fmt`.
+`scribe.put(fmt,...)`      | Writes a formatted string from `scribe.format` to `stdout`.
+`scribe.putln(fmt,...)`    | Writes a formatted string followed by a newline to `stdout`.
+`scribe.eput(fmt,...)`     | Writes a formatted string to `stderr`.
+`scribe.eput(fmt,...)`     | Writes a formatted string followed by a newline to `stderr`.
+`scribe.fput(f, fmt,...)`  | Writes a formatted string to the file `f`.
+`scribe.fput(f, fmt,...)`  | Writes a formatted string followed by a newline to the file `f`.
+: {.bordered .striped .hover .responsive tbl-colwidths="[30,70]"}
+
+The `scribe.format(fmt, ...)` method extends Lua's standard `string.format(fmt, ...)`.
+If the `fmt` "recipe" doesn't have any of Scribe's custom table specifiers, then the two methods produce identical results.
+
+Lua's standard `string.format` method is based almost entirely on the time-tested [sprintf] function from `C`.
+You can use `string.format` to do things like:
+```lua
+local name, age = "Johnny", 11
+local greeting = string.format("Hi, my name is %s, and I am %d years old!", name, age)
+print(greeting)
+```
+This prints "Hi, my name is Johnny, and I am 11 years old!" on the screen.
+
+The template `"Hi, my name is %s and I am %d years old!"` can be viewed as a *recipe* for making strings.
+The `%s` and `%d` *format specifiers* are placeholders and tell `string.format` to look for two variables in the trailing arguments and to format the first as a string and the second as a decimal number.
+If you don't pass two appropriate trailing parameters after the template, `string.format` will be upset and raise an error.
+
+Beyond the most trivial scripts, Lua programs are chock full of tables.
+A considerable drawback of `string.format` is that it does not know how to format a Lua table usefully.
+The underlying `C` mechanism it relies on is oblivious to its internals.
+
+At best, given a table argument, `string.format` will pop out something like "table:x600001d32980", which can be interpreted as Lua saying, "Yes, I see a table, and it resides at that long hexadecimal address in memory".
+That is very unlikely to be what you want.
+
+Of course, the `string.format` function is still very valuable.
+But to use it, you really need to unpack any table arguments into their constituent non-table elements.
+While this is always possible, it is ungainly and time-consuming.
+
+The `scribe.format` function fixes the gap by adding *extra* placeholder specifiers that let you output tables in several styles.
+When `scribe.format` comes across `%t` in a recipe template, it expects there is a corresponding table argument that you want to see as an inline table.
+The actual conversion of the table to a string is then done by {scribe.inline}.
+
+## Table Format Specifiers
+
+As well as all the usual Lua format specifiers like `%s` for strings after importing `scribe,` Scribe recognises these extra ones to deal with tables.
+
+Specifier  | Output from the Corresponding Table Argument
+--------- | ---------------------------------------------------------------------------------------
+`%t`      | A one-line string. <br> Arrays are delimited as `[ ... ]`. <br> Other tables are delimited as `{ ... }`.
+`%T`      | A pretty, multi-line string. <br> Arrays are delimited as `[ ... ]`. <br> Other tables are delimited as `{ ... }`. <br> Simple tables with no sub-tables are still inlined.
+`%2T`     | A "classic" multi-line string with tables in braces and all elements on separate indented lines.
+`%3T`     | A multi-line string without delimiters that shows the table structure by indentation alone.
+`%9T`     | A debug string showing the table structure in an abstract syntax tree.
+`%J`      | A multiline JSON string.
+`%j`      | A compact one-line JSON string.
+: {.bordered .striped .hover .responsive tbl-colwidths="[20,80]"}
+
+[Example:]{.bt}
+```lua
+local putln = require('scribe').putln
+local pupils = {{name = 'Mary', age = 12}, {name = 'Joe', age = 11}}
+putln("Our pupils: %t", pupils)
+```
+
+[Output:]{.bt}
+```txt
+Our pupils: [ { age = 12, name = "Mary" }, { age = 11, name = "Joe" } ]
+```
+
+## Class Extensions
+
+Scribe also adds some methods to Lua's `file` and `string` classes.
+
+If `f` is a Lua file handle, and `s` is a Lua string, then after loading `scribe` you have access to the following new class methods:
+
+Method                   | Brief Description
+------------------------ | ------------------------------------------------------------------------
+`f:put(fmt, ...)`        | This is another way of writing `scribe.fput(f, fmt, ...)`.
+`f:putln(fmt, ...)`      | This is another way of writing `scribe.fputln(f, fmt, ...)`.
+`s:scribe(...)`          | This is another way of writing `scribe.format(s, ...)`.
+: {.bordered .striped .hover .responsive tbl-colwidths="[20,80]"}
+
+## Errors
+
+Under the covers, `scribe.format` processes table arguments into strings and then relies on `string.format` to finish the formatting request.
+This means that `scribe.format` can raise the same errors as `string.format`.
+
+For example, if you forget to pass a trailing argument:
+```lua
+putln("My name is %s, and I am %d years old.", "Tom")
+```
+Then, the program will crash with an error message that looks like:
+```sh
+.../scribe.lua:577: bad argument #3 to 'format' (no value)
+stack traceback:
+	[C]: in function 'string.format'
+	.../scribe.lua:577: in function 'scribe.format'
+	.../scribe.lua:642: in function 'scribe.putln'
+	...
+	[C]: in ?
+```
+
+In addition, `scribe.format` detects invalid placeholders in the template recipe.
+When that happens, the program does not crash.
+Instead, it returns a string that should make that programming error clear.
+
+For example if you have:
+```lua
+putln("The table is %7t.", {1,2,3})
+```
+This will output the error string:
+```sh
+[FORMAT ERROR]: "The table: %7t" -- unknown table specifier: "7t"
+```
+
+## See Also
+
+[Object-to-String Conversions](/pages/stringification.qmd)  <br>
+[Turning the Tables ... ](/pages/tutorial/index.qmd)

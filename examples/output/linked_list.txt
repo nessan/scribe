@@ -1,0 +1,135 @@
+Inline Format for "linked_list":
+<table> = { 1 = { next = <2>, node = "Thomas", payload = 10, prev = <1> }, 2 = { next = <3>, node = "Harold", payload = 20, prev = <1> }, 3 = { next = <4>, node = "Sloane", payload = 30, prev = <2> }, 4 = { next = <4>, node = "Daphne", payload = 40, prev = <3> }, all = <table>, head = <1>, tail = <4> }
+
+Pretty Format for "linked_list":
+<table> = {
+    1 = { next = <2>, node = "Thomas", payload = 10, prev = <1> },
+    2 = { next = <3>, node = "Harold", payload = 20, prev = <1> },
+    3 = { next = <4>, node = "Sloane", payload = 30, prev = <2> },
+    4 = { next = <4>, node = "Daphne", payload = 40, prev = <3> },
+    all = <table>,
+    head = <1>,
+    tail = <4>
+}
+
+Classic Format for "linked_list":
+<table> = {
+    1 = {
+        next = <2>,
+        node = "Thomas",
+        payload = 10,
+        prev = <1>
+    },
+    2 = {
+        next = <3>,
+        node = "Harold",
+        payload = 20,
+        prev = <1>
+    },
+    3 = {
+        next = <4>,
+        node = "Sloane",
+        payload = 30,
+        prev = <2>
+    },
+    4 = {
+        next = <4>,
+        node = "Daphne",
+        payload = 40,
+        prev = <3>
+    },
+    all = <table>,
+    head = <1>,
+    tail = <4>
+}
+
+Alternate Format for "linked_list":
+<table> = 1: 
+    next: <2>,
+    node: "Thomas",
+    payload: 10,
+    prev: <1>,
+2: 
+    next: <3>,
+    node: "Harold",
+    payload: 20,
+    prev: <1>,
+3: 
+    next: <4>,
+    node: "Sloane",
+    payload: 30,
+    prev: <2>,
+4: 
+    next: <4>,
+    node: "Daphne",
+    payload: 40,
+    prev: <3>,
+all: <table>,
+head: <1>,
+tail: <4>
+
+Inline JSON Format for "linked_list":
+<table> = {"1":{"next":<2>,"node":"Thomas","payload":10,"prev":<1>},"2":{"next":<3>,"node":"Harold","payload":20,"prev":<1>},"3":{"next":<4>,"node":"Sloane","payload":30,"prev":<2>},"4":{"next":<4>,"node":"Daphne","payload":40,"prev":<3>},"all":<table>,"head":<1>,"tail":<4>}
+
+JSON Format for "linked_list":
+<table> = {
+    "1": {
+        "next": <2>,
+        "node": "Thomas",
+        "payload": 10,
+        "prev": <1>
+    },
+    "2": {
+        "next": <3>,
+        "node": "Harold",
+        "payload": 20,
+        "prev": <1>
+    },
+    "3": {
+        "next": <4>,
+        "node": "Sloane",
+        "payload": 30,
+        "prev": <2>
+    },
+    "4": {
+        "next": <4>,
+        "node": "Daphne",
+        "payload": 40,
+        "prev": <3>
+    },
+    "all": <table>,
+    "head": <1>,
+    "tail": <4>
+}
+
+Debug Format for "linked_list":
+<table> = TABLE_BEGIN
+ INDENT  KEY_BEGIN "1" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "next" KEY_END = <2> SEP 
+ INDENT  INDENT  KEY_BEGIN "node" KEY_END = "Thomas" SEP 
+ INDENT  INDENT  KEY_BEGIN "payload" KEY_END = 10 SEP 
+ INDENT  INDENT  KEY_BEGIN "prev" KEY_END = <1>
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "2" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "next" KEY_END = <3> SEP 
+ INDENT  INDENT  KEY_BEGIN "node" KEY_END = "Harold" SEP 
+ INDENT  INDENT  KEY_BEGIN "payload" KEY_END = 20 SEP 
+ INDENT  INDENT  KEY_BEGIN "prev" KEY_END = <1>
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "3" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "next" KEY_END = <4> SEP 
+ INDENT  INDENT  KEY_BEGIN "node" KEY_END = "Sloane" SEP 
+ INDENT  INDENT  KEY_BEGIN "payload" KEY_END = 30 SEP 
+ INDENT  INDENT  KEY_BEGIN "prev" KEY_END = <2>
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "4" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "next" KEY_END = <4> SEP 
+ INDENT  INDENT  KEY_BEGIN "node" KEY_END = "Daphne" SEP 
+ INDENT  INDENT  KEY_BEGIN "payload" KEY_END = 40 SEP 
+ INDENT  INDENT  KEY_BEGIN "prev" KEY_END = <3>
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "all" KEY_END = <table> SEP 
+ INDENT  KEY_BEGIN "head" KEY_END = <1> SEP 
+ INDENT  KEY_BEGIN "tail" KEY_END = <4>
+TABLE_END
+

@@ -1,0 +1,230 @@
+## Ordered Output
+
+Lua has a single `table` type.
+However, as talked about several times now, under the covers, Lua distinguishes between the array part of a table and any dictionary part it might contain.
+The elements in a Lua array are in fixed constant order so that if:
+```lua
+local arr = { 'a', 'b', 'c' }
+```
+Then, `print(inline(arr))` will *always* print `['a', 'b', 'c']`.
+
+In contrast, the element order in a general key-value table is not defined or constant.
+If we have:
+```lua
+local mouse = { first = 'Minnie', last = 'Mouse' }
+```
+Then, `print(inline(mouse))` will sometimes display `{ last = Mouse, first = Minnie, }`, other times `{ first = Minnie, last = Mouse, }`.
+
+Jumping around like that can be disconcerting.
+
+So far, we have used the Lua standard `pairs` function to traverse through the key-value pairs in all tables.
+```lua
+    for k, v in pairs(tbl) do
+        ...
+    end
+```
+Lua provides an efficient iterator function, `ipairs`, specifically for arrays.
+We can alter our iteration based on whether the table is an array or a key-value table and get a little performance boost.
+```lua
+    local iter = array and ipairs or pairs
+    for k, v in iter(tbl) do
+        ...
+    end
+```
+Of course, `ipairs` doesn't solve the problem of inconsistent output for key-value tables.
+
+Fortunately, Lua lets us define custom iterator functions, and we can create one to iterate over the keys in a consistent order.
+```lua
+    local iter = array and ipairs or ordered_pairs  -- <1>
+    for k, v in tbl(tbl) do
+        ...
+    end
+```
+1. We have replaced the standard `pairs` iterator with a custom `ordered_pairs` function. <br> We still use `ipairs` for arrays.
+
+A custom iterator function is passed a table and should return the "next" key-value pair in the table.
+The function should return `nil` if no more key-value pairs exist.
+You are free to determine what "next" means in this context.
+
+Here is a simple implementation of `ordered_pairs`:
+```lua
+local function ordered_pairs(tbl)
+    local keys = {}
+    for k in pairs(tbl) do table.insert(keys, k) end    -- <1>
+    table.sort(keys)                                    -- <2>
+    local i = 0
+    return function()                                   -- <3>
+        i = i + 1                                       -- <4>
+        return keys[i], tbl[keys[i]]                    -- <5>
+    end
+end
+```
+1. We capture all the keys from `tbl` in the `keys` *array*.
+2. The default behaviour for `table.sort` is alphabetical sorting. <br> However, `table.sort` can take a comparison function as a second argument if you want to sort the keys in a different order.
+3. The `ordered_pairs` function returns an *iterator* which is itself a function.
+4. The iterator function is a *closure*, so it has access to the `keys` and the current index `i` from the enclosing function.
+5. The iterator increments the index `i` and returns the corresponding key-value pair from `tbl`. <br> The iterator will return `nil, nil` when there are no more elements, but you could put in an explicit check on `i` if you wanted to.
+
+This version of `ordered_keys` assumes that the keys are all the same type, which is too limiting.
+The `table.sort` call will fail if they aren't.
+A comparison function takes two arguments and returns `true` if the first argument should come before the second.
+We can make a default one that works for all types:
+```lua
+local function compare(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then
+        return ta < tb
+    elseif ta == 'table' or ta == 'boolean' or ta == 'function' then
+        return tostring(a) < tostring(b)
+    else
+        return a < b
+    end
+end
+```
+This function sorts keys first by type and then by value.
+We note that alphabetically, `number` comes before `string`, so we will see numbers before strings, which is the standard convention.
+
+We could use this function in `ordered_pairs`:
+```lua
+local function ordered_pairs(tbl)
+    ...
+    table.sort(keys, compare)   -- <1>
+    ...
+end
+```
+1. We sort the keys using the comparison function `compare`.
+
+However, the user may want to define a custom comparison function.
+For example, they might want to sort the keys case-insensitively or in reverse alphabetical order.
+
+Ideally, we want the user to be able to pass a comparison function to `ordered_pairs` and have it return an iterator maker that can use that comparator to iterate over any table in a consistent order.
+
+An extra level of indirection is required:
+```lua
+local function ordered_pairs(comparator)                        -- <1>
+    if comparator == false then return pairs end                -- <2>
+    comparator = comparator or compare               -- <3>
+    return function(tbl)                                        -- <4>
+        local keys = {}
+        for k, _ in pairs(tbl) do table.insert(keys, k) end
+        table.sort(keys, comparator)                            -- <5>
+        local i = 0
+        return function()                                       -- <6>
+            i = i + 1
+            return keys[i], tbl[keys[i]]
+        end
+    end
+end
+```
+1. We have added a `comparator` argument, which should be a function that takes two keys and returns `true` if the first key should come before the second.
+2. If `comparator` is  *explicitly* set to `false`, we return the standard `pairs` iterator.
+3. If `comparator` is missing, we use the `compare`.
+4. We return a function that takes a table and returns an iterator function for that table using the sorted keys.
+5. We sort the keys using `comparator`, which will be set by now.
+6. The iterator function is a closure with access to the sorted keys and the current index.
+
+NOTE: Adding a layer of indirection is another typical pattern in programming.
+Our `ordered_pairs` is a function that returns a function that returns a function.
+
+We add a `comparator` field to the `options.pretty` table:
+```lua
+local options = {}
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' ',
+    show_indices  = false,
+    comparator    = compare  -- <1>
+}
+```
+1. We use the default comparison function unless the user specifies otherwise.
+
+NOTE: The user can set the `comparator` field to `false` if they want to use the standard `pairs` iterator.
+
+### Aside: `nil` vs. `false`
+
+Like many older languages, Lua treats `nil` as *false* in a conditional test.
+
+However, `false` is a distinct value in Lua.
+It is a *boolean* that is `false` in a conditional test.
+In Lua, `nil` represents the absence of a value.
+`false` represents a value that is explicitly `false`.
+
+Choosing to treat `nil` as `false` in a conditional test probably seemed convenient.
+It is a common idiom in many languages, particularly C, where `0` can represent *false*.
+Modern languages have moved away from this.
+
+This conflating of `nil` and `false` can lead to subtle bugs.
+This is particularly true in Lua, where you will likely have functions with optional arguments.
+The common idiom for optional arguments looks like this:
+```lua
+local function foo(arg)
+    arg = arg or 'default'
+    print(arg)
+end
+```
+If `arg` is missing or `nil`, it will be set to `'default'`.
+If `arg` is explicitly `false`, it will still be set to `'default'` which is probably not what you want.
+
+Try it:
+```lua
+foo()           -- prints 'default'
+foo(nil)        -- prints 'default'
+foo('hello')    -- prints 'hello'
+foo(false)      -- prints 'default'     -- <1>
+```
+1. This is not what you want!
+
+From personal experience, this will bite you at some point.
+
+You sometimes might want to distinguish between the absence of an argument and an explicitly `false` argument.
+We can rewrite `foo` to handle this:
+```lua
+local function foo(arg)
+    if arg == false then print('false') end  -- <1>
+    arg = arg or 'default'
+    print(arg)
+end
+
+foo()           -- prints 'default'
+foo(nil)        -- prints 'default'
+foo('hello')    -- prints 'hello'
+foo(false)      -- prints 'false'
+```
+1. We added a check for `arg` being explicitly `false`.
+
+### Ordered Output Resolved
+
+The change to `table_string` is quite small:
+```lua
+function table_string(tbl, opts)
+    ...
+    local iter = array and ipairs or ordered_pairs(opts.comparator)  -- <1>
+    for k, v in iter(tbl) do
+        ...
+    end
+    ...
+end
+```
+1. We have replaced the `pairs` iterator with `ordered_pairs` using a user-defined comparison function for non-arrays.
+
+Now if you try `print(pretty(user))` you *always* get:
+```txt
+{                       # <1>
+ first = Minnie,
+ friends =           # <2>
+ [
+ Mickey,
+ Goofy
+ ],
+ last = Mouse
+}
+```
+1. `user` is a key-value table, and the elements are shown with the keys alphabetically.
+2. `friends` is a sub-array with the elements shown in index order.

@@ -1,0 +1,390 @@
+## Other Output Formats
+
+We will look at a few other formats commonly used for viewing tables.
+
+### Indentation Only
+
+Another commonly used multiline table format avoids delimiters and instead relies on indentation to show the structure.
+Here is how our `user` table would look in this format:
+```txt
+last: Mouse,
+first: Minnie,
+friends:            # <1>
+ Mickey,
+ Goofy
+```
+1. This all looks straightforward, but this format is tricky to implement.
+
+We add a new set of formatting options for this format:
+```lua
+options.alt = table_clone(options.pretty)
+options.alt.table_begin = ''
+options.alt.table_end   = ''
+options.alt.array_begin = ''
+options.alt.array_end   = ''
+options.alt.key_end     = ': '
+```
+Nothing too wild here; we start with `options.pretty` and set the table/array delimiters to blank strings.
+We also set up colons to act as the assignment operators.
+
+We also add the usual convenience function that packages those formatting options with `table_string`:
+```lua
+function alt(tbl)
+    return table_string(tbl, options.alt)
+end
+```
+If we try `print(alt(user))` we get something like:
+```txt
+ first: Minnie,  # <1>
+ last: Mouse,
+ friends:
+ Mickey,
+ Goofy
+ # <2>
+
+```
+1. An extra indentation layer isn't needed when the table delimiters are blank.
+2. There are also some extra newlines at the end of the output.
+
+A first attempt at fixing this format is to remove the indentation from the top-level elements.
+We can do this by adding a check for a blank table begin-delimiter:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local size, array = metadata(tbl)
+    if size == 0 then return empty_table_string(opts) end
+    local show_keys = not array and true or opts.show_indices
+
+    local tb     = array and opts.array_begin or opts.table_begin
+    local te     = array and opts.array_end or opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+    local nl     = indent == '' and opts.inline_spacer or '\n'
+
+    if tb ~= '' then tb = tb .. nl end                                          -- <1>
+    if te ~= '' then te = nl .. te end                                          -- <2>
+    sep = sep .. nl                                                             -- <3>
+
+    local no_delims = tb == ''
+    if no_delims then indent = '' end                                           -- <4>
+
+    local content = ''
+    local i = 0
+    for k, v in pairs(tbl) do
+        i = i + 1
+        local k_string = show_keys and kb .. tostring(k) .. ke or ''
+        local v_string = ''
+        if type(v) == 'table' then
+            v_string = table_string(v, opts)
+            v_string = indent_string(v_string, opts.indent, true)            -- <5>
+        else
+            v_string = tostring(v)
+        end
+        content = content .. indent .. k_string .. v_string
+        if i < size then content = content .. sep end
+    end
+    return tb .. content .. te
+end
+```
+1. We add a new line to the table begin-delimiter if we use multiline output *and* the table begin-delimiter is not blank.
+2. We add a new line to the table end-delimiter if we use multiline output *and* the table end-delimiter is not blank.
+3. We add a new line to the separator if we are using multiline output.
+4. If the table begin-delimiter is blank, we don't indent the top-level elements in `tbl`.
+5. We still indent any sub-table elements with the "real" indentation amount from the formatting options.
+
+With that in place, `print(alt(user))` returns something unindented at the outermost level and without the extra newlines at the end:
+```txt
+first: Minnie,
+last: Mouse,
+friends: Mickey,            # <1>
+ Goofy
+```
+1. There should be a new line after `friends` here.
+
+We are missing a newline character before the sub-array of friends.
+It should only be present if the table is multiline and the begin-delimiter is blank.
+This suggests a small addition to the `table_string` function:
+```lua
+function table_string(tbl, opts)
+    ...
+    for k, v in pairs(tbl) do
+        ...
+        if type(v) == 'table' then
+            v_string = table_string(v, opts)
+            if tb == '' then v_string = nl .. v_string end  -- <1>
+        ...
+    end
+    return tb .. content .. te
+end
+```
+1. The suggested fix.
+
+However, this doesn't quite work as expected as `print(alt(user))` now returns:
+```txt
+last: Mouse,
+first: Minnie,
+friends:
+Mickey,                # <1>
+ Goofy
+```
+1. We're missing an indentation on the `Mickey` line.
+
+However, we can fix this by using that third `ignore_first_line` argument in `indent_string`:
+```lua
+function table_string(tbl, opts)
+    ...
+    for k, v in pairs(tbl) do
+        ...
+        if type(v) == 'table' then
+            v_string = table_string(v, opts)
+            v_string = indent_string(v_string, opts.indent, not no_delims)  -- <1>
+            if no_delims and show_keys then v_string = nl .. v_string end      -- <2>
+        ...
+    end
+    return tb .. content .. te
+end
+```
+1. We skip indenting the first line of the sub-table *unless* the table begin-delimiter is blank.
+2. We add a newline character *if* the table begin-delimiter is blank and we are showing keys.
+
+The full `table_string` function now looks like:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local size, array = metadata(tbl)
+    if size == 0 then return empty_table_string(opts) end
+    local show_keys = not array and true or opts.show_indices
+
+    local tb     = array and opts.array_begin or opts.table_begin
+    local te     = array and opts.array_end or opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+    local nl     = indent == '' and opts.inline_spacer or '\n'
+
+    sep = sep .. nl
+    if tb ~= '' then tb = tb .. nl end
+    if te ~= '' then te = nl .. te end
+
+    local no_delims = tb == ''
+    if no_delims then indent = '' end
+
+    local content = ''
+    local i = 0
+    for k, v in pairs(tbl) do
+        i = i + 1
+        local k_string = show_keys and kb .. tostring(k) .. ke or ''
+        local v_string = ''
+        if type(v) == 'table' then
+            v_string = table_string(v, opts)
+            v_string = indent_string(v_string, opts.indent, not no_delims)
+            if no_delims and show_keys then v_string = nl .. v_string end        -- <1>
+        else
+            v_string = tostring(v)
+        end
+        content = content .. indent .. k_string .. v_string
+        if i < size then content = content .. sep end
+    end
+    return tb .. content .. te
+end
+```
+
+With this change in place `print(alt(user))` returns something like:
+```txt
+last: Mouse,        # <1>
+first: Minnie,
+friends:
+ Mickey,
+ Goofy
+```
+1. The elements can be ordered differently.
+
+The other formats still work as expected.
+`print(pretty(user))` returns:
+```txt
+{
+ last = Mouse,
+ first = Minnie,
+ friends = [
+ Mickey,
+ Goofy
+ ]
+}
+```
+`print(inline(user))` returns:
+```txt
+{ last = Mouse, first = Minnie, friends = [ Mickey, Goofy ] }
+```
+
+### JSON
+
+The JSON format is a popular format for exchanging data between systems.
+Like our `pretty` format, JSON delimits tables with curly braces and arrays with square brackets.
+It surrounds keys with double quotes and uses colons to separate keys from values.
+
+Let's add a new set of formatting options for JSON:
+```lua
+options.json = table_clone(options.pretty)
+options.json.key_begin = '"'
+options.json.key_end   = '": '
+```
+
+We also add the usual convenience function that packages those formatting options with `table_string`:
+```lua
+function json(tbl)
+    return table_string(tbl, options.json)
+end
+
+If we try `print(alt(user))` we get:
+```txt
+{
+    "last": Mouse,
+    "first": Minnie,
+    "friends": [
+        Mickey,
+        Goofy
+ ]
+}
+```
+This isn't quite JSON, as JSON requires string values to be surrounded by double quotes.
+
+In fact, it is a good idea to always surround string values with double quotes.
+Lua's `string` class has a `string.format` method that is perfect for this task.
+
+For example, `string.format("Hello, %s!", "world")` returns `"Hello, world!"`.
+The `%s` is a placeholder for a string value that is passed as a trailing argument to `string.format`.
+`string.format` is a wrapper around the venerable C function {sprintf} and uses almost all the same format specifiers.
+So `%s` is used for strings, `%d` for integers, and `%f` for floating-point numbers etc.
+
+One of Lua's primary use cases is dealing with large amounts of text that often includes multiline strings.
+It is useful to be able to see those in their raw form.
+For that reason, Lua has a special format specifier `%q` that is used to quote strings.
+It is similar to `%s` but it adds double quotes around the string and escapes any special characters.
+For example, `string.format("%q", 'Hello, "world"!')` returns `'"Hello, \"world\"!"'`.
+
+We can use this format specifier to good effect.
+While at it, we will add a `simple_string` counterpart to `table_string` to take any Lua object and return a simple string representation.
+```lua
+local function simple_string(obj)                                               -- <1>
+    if obj == nil then return 'nil' end
+    local obj_type = type(obj)
+    if obj_type == 'number' or obj_type == 'boolean' or obj_type == nil then    -- <2>
+        return tostring(obj)
+    elseif obj_type == 'string' then
+        return string.format("%q", obj)                                         -- <3>
+    elseif obj_type == 'table' then
+        return string.format("%p", obj)                                         -- <4>
+    elseif obj_type == 'function' then
+        return '<function>'
+    elseif obj_type == 'userdata' then
+        return '<userdata>'
+    elseif obj_type == 'thread' then
+        return '<thread>'
+    else
+        return '<UNKNOWN type: ' .. tostring(obj) .. '>'                        -- <5>
+    end
+end
+```
+1. The new function `simple_string` takes any Lua object and returns a simple string representation of it.
+2. We let `tostring` handle numbers, booleans, and `nil` values.
+3. We use `string.format` with the `%q` format specifier to quote strings.
+4. We use `string.format` with the `%p` format specifier to print the memory address of a table. <br> We will usually defer table conversion to `table_string`.
+5. We should never reach this point, but add a catch-all for unknown types that Lua might introduce.
+
+We can now use `simple_string` in our `table_string` function:
+```lua
+function table_string(tbl, opts)
+    ...
+    local i, content = 0, ''
+    for k, v in pairs(tbl) do
+        i = i + 1
+        local k_string = show_keys and kb .. tostring(k) .. ke or ''                    -- <1>
+        local v_string = ''
+        if type(v) == 'table' then
+            ...
+        else
+            v_string = simple_string(v)                                                 -- <2>
+        end
+        ...
+    end
+    return tb .. content .. te
+end
+```
+1. We still use `tostring` to convert keys to strings and rely on key delimiters to add quotes if needed.
+2. We use `simple_string` to convert non-table values to strings, so always get double quotes around strings.
+
+With this change in place `print(json(user))` returns:
+```json
+{
+    "last": "Mouse",
+    "first": "Minnie",
+    "friends": [
+        "Mickey",
+        "Goofy"
+    ]
+}
+```
+
+### Compact JSON
+
+While JSON is often used in its pretty format, it is common to use a more compact format where all extra spaces and newlines are removed.
+
+We can add a new set of formatting options for inline JSON:
+```lua
+options.inline_json = table_clone(options.json)
+options.inline_json.indent        = ''
+options.inline_json.key_end       = '":'
+options.inline_json.inline_spacer = ''      -- <1>
+```
+1. In this case, we remove the inline spacer as well to make the output even more compact.
+
+We also add the usual convenience function that packages those formatting options with `table_string`:
+```lua
+function inline_json(tbl)
+    return table_string(tbl, options.inline_json)
+end
+```
+
+If we try `print(inline_json(user))` we get:
+```json
+{"last":"Mouse","first":"Minnie","friends":["Mickey","Goofy"]}
+```
+This is also a valid JSON format, but it is harder to read for humans.
+
+### Debug Format
+
+We can add a set of formatting options that makes the structure of the table explicit.
+This can be useful when you are trying to add a custom set of formatting options:
+```lua
+options.debug = table_clone(options.pretty)
+options.debug = table_clone(options.pretty)
+options.debug.indent        = ' INDENT '
+options.debug.table_begin   = 'TABLE BEGIN'
+options.debug.table_end     = 'TABLE END'
+options.debug.array_begin   = 'ARRAY BEGIN'
+options.debug.array_end     = 'ARRAY END'
+options.debug.key_begin     = ' KEY BEGIN '
+options.debug.key_end       = ' KEY END = '
+options.debug.sep           = ' SEP '
+options.debug.show_indices  = true
+```
+As usual, we add the convenience function that packages those formatting options with `table_string`:
+```lua
+function debug(tbl)
+    return table_string(tbl, options.debug)
+end
+```
+If we try `print(debug(user))` we get:
+```txt
+TABLE BEGIN
+ INDENT  KEY BEGIN first KEY END = "Minnie" SEP
+ INDENT  KEY BEGIN last KEY END = "Mouse" SEP
+ INDENT  KEY BEGIN friends KEY END = ARRAY BEGIN
+ INDENT  INDENT  KEY BEGIN 1 KEY END = "Mickey" SEP
+ INDENT  INDENT  KEY BEGIN 2 KEY END = "Goofy"
+ INDENT ARRAY END
+TABLE END
+```

@@ -1,0 +1,239 @@
+## Scribe Facade
+
+### Introduction
+
+After the first attempt at `table_string(tbl)`, we commented that, while the method name was descriptive, we needed to check that the `tbl` argument is an actual table.
+
+Instead of doing that, we will create another "facade" function `scribe` that will return a string for *any* Lua object. The user will call this function, and we will make `table_string` a private function only called by `scribe` when the object is a table.
+Currently, our `table_string` function starts as follows:
+```lua
+function table_string(root_tbl, opts)                                -- <1>
+    opts = opts or options.pretty                                 -- <2>
+    local md = metadata(root_tbl)
+    ...
+end
+```
+1. `table_string` is a *global* function that is available to the user.
+2. It has to check if `opts` is provided; if not, set it to the default `options.pretty`.
+
+We will change this to:
+```lua
+local function table_string(root_tbl, opts)                          -- <1>
+    local md = metadata(root_tbl)                                       -- <2>
+    ...
+end
+```
+1. We make `table_string` a *local* function.
+2. We remove the `opts` check as we know that `scribe` will always provide it.
+
+NOTE: In a later chapter, we will discuss the difference between *global* and *local* functions.
+
+In the meantime, we introduce `scribe` as follows:
+```lua
+function scribe(obj, opts)                                           -- <1>
+    if type(obj) ~= 'table' then return simple_string(obj) end          -- <2>
+    opts = opts or options.pretty                                 -- <3>
+    return table_string(obj, opts)                                   -- <4>
+end
+```
+1. `obj` can be *any* Lua object and `opts` is an *optional* table of opts.
+2. We handle non-table objects up-front by calling `simple_string`.
+3. We set the `opts` to the default `options.pretty` if it is not provided.
+4. If we get here, we know that `obj` is a table, so we call the private `table_string` method to convert it to a string.
+
+Of course, our other public facade functions will also call `scribe` instead of `table_string` directly.
+For example, `pretty_string` will now look like this:
+```lua
+function pretty_string(tbl, opts)
+    return scribe(tbl, options.pretty)                                  -- <1>
+end
+```
+1. We call `scribe` with the `options.pretty` table.
+
+### Health and Safety
+
+We have now added a layer of protection to our `table_string` function by ensuring that it is only called by `scribe` when the object is a table.
+
+However, we still need to check that the `opts` table is *complete*.
+Each of those many fields in the options table must be present, or `table_string` will fail.
+
+Of course, we are sure that the standard options tables we provide are complete, but what if the user provides their own options table?
+
+We start by adding a "marker" to our own options tables to indicate that they are complete:
+```lua
+local options = {}
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' ',
+    show_indices  = false,
+    comparator    = compare,
+    inline_size   = math.huge,
+    path_root     = 'table',
+    path_sep      = '.',
+    path_begin    = '<',
+    path_end      = '>',
+    COMPLETE      = true                                      -- <1>
+}
+```
+1. If the user provides their own options table, we will check for the presence of this field to determine if it is complete.
+
+We also add a function that adds missing fields to an options table:
+```lua
+local function complete_options_table(options, from)                            -- <1>
+    for k, v in pairs(from) do
+        if options[k] == nil then options[k] = v end                            -- <2>
+    end
+end
+```
+1. This function takes two arguments: the `opts` table to complete and the `from` table to use as a template.
+2. We add missing fields from the `from` table to the `opts` table.
+
+`complete_options_table` is a private function that is only called by `scribe`, so we are sure that edge cases are handled correctly.
+For example, we can be confident that there will be two arguments and that the second argument will be a complete options table.
+
+We call this function `scribe`:
+```lua
+function scribe(obj, opts)
+    if type(obj) ~= 'table' then return simple_string(obj) end
+    opts = opts or options.pretty                                         -- <1>
+    if not opts.COMPLETE then                                                -- <2>
+        local from = opts.indent == '' and options.inline or options.pretty  -- <3>
+        complete_options_table(options, from)                                   -- <4>
+    end
+    return table_string(obj, opts)                                           -- <5>
+end
+```
+1. If the user does not provide any options table, we use the `options.pretty` table.
+2. If the user provides a custom options table, we ensure it's complete before calling `table_string`.
+3. We use the `options.inline` table if the `indent` field is empty. Otherwise, we use the `options.pretty` table.
+4. We call the `complete_options_table` function to add any missing fields to the `opts` table.
+5. We can safely call `table_string` with the complete `opts` table.
+
+Adding that `COMPLETE` field to our options tables can avoid most performance issues and ensure that our code is robust.
+
+WARNING: There is a caveat to this approach.
+If the user provides their own incomplete options table, then the first time we see it, we *alter* it.
+Generally, changing things under-the-covers is a bad idea, but in this case, the user will only see the performance hit once.
+All in all, it is a reasonable trade-off.
+
+Here is an example of how the user can provide their own minimal options table that sets the indent to two spaces:
+```lua
+local my_options = { indent = '  ' }
+local user =
+{
+    first = "Minnie",
+    last = "Mouse",
+    friends = { "Mickey", "Goofy" }
+}
+print(scribe(user, my_options))
+```
+This will output:
+```
+{
+ first = "Minnie",
+ last = "Mouse",
+ friends = { "Mickey", "Goofy" }
+}
+```
+The `my_options` table is complete as far as `table_string` is concerned.
+We can inspect it by a call to `print(classic(my_options))` which will output:
+```txt
+{
+ COMPLETE = true,            # <1>
+ array_begin = "[",
+ array_end = "]",
+ comparator = <function>,    # <2>
+ indent = "  ",              # <3>
+ inline_size = inf,          # <4>
+ inline_spacer = " ",
+ key_begin = "",
+ key_end = " = ",
+ path_begin = "<",
+ path_end = ">",
+ path_root = "table",
+ path_sep = ".",
+ sep = ",",
+ show_indices = false,
+ table_begin = "{",
+ table_end = "}"
+}
+```
+1. The `COMPLETE` field is present and set to `true`,; all the other fields are present and mostly set to the default values from the `options.pretty` table.
+2. The `comparator` field is shown as `<function>`.
+3. The `indent` field is set to two spaces as provided by the user.
+4. `inf` means infinity, accessible in Lua as `math.huge`.
+
+The next time we call `scribe` with the `my_options` table, it will be complete and we will not have to call `complete_options_table` again.
+
+### Overrides
+
+We also want to allow the user to override one or more options in *any* of the pre-canned options tables.
+
+The signature of your main `scribe` function will now look like this:
+```lua
+function scribe(obj, options, overrides)                                      -- <1>
+    ...
+end
+```
+1. We add a third argument, `overrides`, which is an *optional* table of options to override.
+
+Now, *both* the second `opts` argument *and* the third `overrides` argument are optional.
+A moment's thought will convince you that if the `opts` argument is missing, the `overrides` argument is also.
+
+Here is the full `scribe` function:
+```lua
+function scribe(obj, options, overrides)
+    if type(obj) ~= 'table' then return simple_string(obj) end                      -- <1>
+
+    if options == nil then return table_string(obj, options.pretty) end             -- <2>
+
+    if not opts.COMPLETE then                                                    -- <3>
+        local from = opts.indent == '' and options.inline or options.pretty
+        complete_options_table(options, from)
+    end
+    if overrides == nil then return table_string(obj, opts) end                  -- <4>
+
+    if not overrides.COMPLETE then complete_options_table(overrides, opts) end
+    return table_string(obj, overrides)                                             -- <5>
+end
+```
+1. As usual, we handle non-table objects up-front.
+2. If the user does not provide an `opts` table, we use the `options.pretty` table and are done.
+3. We complete an incomplete `opts` table if the user provides it.
+4. If the user does not provide an `overrides` table, we use the `opts` table and are done.
+5. If the user provides an `overrides` table, we complete it from the `opts` table and use it. <br> By the time we get here, we can be sure that the `opts` table is complete.
+
+We also alter the facade functions to permit an `overrides` table.
+For example:
+```lua
+function pretty_string(tbl, overrides)
+    return scribe(tbl, options.pretty, overrides)                                  -- <1>
+end
+```
+1. The main options table is `options.pretty`, and we also pass along any user-provided `overrides` table.
+
+Here is an example of how the user can provide their own options table and override the `indent` field:
+```lua
+local user =
+{
+    first = "Minnie",
+    last = "Mouse",
+    friends = { "Mickey", "Goofy" }
+}
+print(classic(user, { indent = '        ' }))
+```
+Output:
+```txt
+{
+ first = "Minnie",
+ last = "Mouse",
+ friends = { "Mickey", "Goofy" }
+}
+```

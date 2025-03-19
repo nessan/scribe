@@ -1,0 +1,22 @@
+## Introduction
+
+Lua's only rich native type is the `table`.
+
+The table is the only game in town, so you will use it to implement every non-trivial data structure you need in any Lua project.
+
+In this article, we will gradually build `scribe`, a Lua module that converts tables (and other Lua types) to readable strings.
+
+Converting arbitrary Lua tables into descriptive strings is more complex than it initially appears.
+We'll examine the issues that arise and how `scribe` addresses some of the pitfalls.
+
+We will start with a trivial implementation in a dozen lines of Lua.
+Over time, we will evolve that code into a production-ready Lua module that handles the most complex tables with cycles and shared references.
+We will also see how to support multiple output formats in a single code block.
+
+This blow-by-blow description and the liberally documented final product, `scribe.lua`, should be a helpful tutorial, at least for those new to Lua, especially those with experience in other languages.
+
+WARNING: This is not an introduction to Lua.
+Think of it as more Lua 201 than Lua 101.
+
+This article is long, but we have tried to make it worthwhile. <br>
+And, of course, we hope you find `scribe` itself as helpful as we do!

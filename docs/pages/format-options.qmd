@@ -1,0 +1,181 @@
+---
+title: Formatting Options
+---
+
+## Introduction
+
+If you have loaded the `scribe` module as:
+```lua
+local scribe = require `scribe'
+```
+You can call the most general method for converting a Lua object `obj` to a string:
+```lua
+local obj_string = scribe(obj, opts, overrides)
+```
+
+TIP: Scribe has [pre-canned standard options](/pages/standard-formats.qmd) that cover most use cases.
+Those methods should usually be your first port of call.
+
+The `opts` and `overrides` arguments are both optional.
+
+If `opts` is missing, the method will use the formatting option table `scribe.options.default`.
+Out of the box, the default is `scribe.options.inline`.
+You can change that if you wish.
+By default, `scribe(obj)` returns the string from {scribe.inline}.
+
+The `overrides` argument is an optional table of tweaks you would like to make to `opts`.
+By default, this is `nil`.
+See the [customisation](/pages/custom-options.qmd) page for more details.
+
+## Formatting Parameters
+
+If you do use `scribe` with the optional second `opts` argument, it should be a table with the following keys and values:
+
+The Key String         | Value Type | Brief Description of the Value
+---------------------- | :--------: |--------------------------------------------------------------
+`opts.table_begin`     | `string`   | The left delimiter for general tables, e.g., `{`.
+`opts.table_end`       | `string`   | The right delimiter for general tables, e.g., `}`.
+`opts.array_begin`     | `string`   | The left delimiter for *array* tables, e.g., `[`.
+`opts.array_end`       | `string`   | The right delimiter for *array* tables, e.g., `]`.
+`opts.inline_spacer`   | `string`   | For example, if this is `' '`,  then Scribe adds an extra space between inline table/array delimiters and their contents: <br> You get `{ ... }` instead of `{...}`.
+`opts.key_begin`       | `string`   | The left delimiter for table keys, e.g., `''`.
+`opts.key_end`         | `string`   | The right delimiter for table keys with assignment, e.g., ` = `.
+`opts.show_indices`    | `boolean`  | Controls visibility of indices in arrays.
+`opts.sep`             | `string`   | The separator that marks the end of a key-value pair, e.g. `, `.
+`opts.indent`          | `string`   | Indentation for table elements per nesting level, e.g. `"  "`. <br> If `indent` is set to `""`,  the output will be a one-line string.
+`opts.inline_size`     | `number`   | We put *simple* sub-tables & sub-arrays on one line no matter what `indent` is set to as long as their size is less than `inline_size`.
+`opts.comparator`      | `function` | The comparator function used to sort table keys. <br> We use a default comparator if `comparator` isn’t set. <br> To *not* use ordered output, explicitly set this to `false`.
+`opts.path_root`       | `string`   | A top-level name to anchor path references to shared tables. <br> Defaults to `table`.
+`opts.path_sep`        | `string`   | The separator to use in paths for shared tables <br> Defaults to `.` so paths look like `<foo.bar>` or perhaps `<table>`
+`opts.path_begin`      | `string`   | The left delimiter for path references.  Defaults to `<`.
+`opts.path_end`        | `string`   | The right delimiter for path references. Defaults to `>`.
+`opts.use_metatable`   | `boolean`  | Controls whether we use any custom `__tostring()` metamethod if present.
+: {.bordered .striped .hover .responsive tbl-colwidths="[20,10,70]"}
+
+## Parameter Definitions
+
+Most of these format fields do obvious things, like setting a table's left and right delimiters.
+
+Others include:
+
+1. If the `indent` option is the empty string `""`,  tables will always be output on one line.
+2. Even if we use indentation, any *simple* enough tables or arrays are inlined. <br> See the [Simple Tables](#simple-tables) section.
+3. The output strings can distinguish between general tables and arrays. <br>For example, JSON uses `[...]` to delimit arrays and `{...}` for general name-value tables.
+4. Arrays have implicit consecutive integer keys starting at one. <br> Generally, you don't need to see those, but you can force them to be output.
+5. The `path_root` and `path_sep` variables only come into play when a table has shared references. The first time a table is seen, you get a full definition. <br> You get a reference like `<foo.bar>` afterwards.
+6. See the [Ordered Iteration](#ordered-iteration) section for more details about the `comparator` field and how to output tables in a key-sorted order.
+7. See the [Path References](#path-references) section for more details about the `path_*` fields.
+8. Setting `use_metatable` to `false` is helpful if you use this module to add a custom `__tostring` metamethod to a class. It stops infinite recursion.
+
+TIP: The values for *all* of the keys are used.
+However, you can just set the ones you want to customise.
+The `scribe` method will fill the rest with reasonable defaults.
+
+Scribe has [pre-canned standard options](/pages/standard-formats.qmd) that cover most use cases.
+You can always copy and tweak the fields in one of those to get the desired output style for tables.
+
+## Simple Tables
+
+A table or array is *simple* if it has no nested sub-tables or sub-arrays.
+
+There is also an optional limit on the number of elements that can be present for a table to be considered "simple".
+
+The `inline_size` field in the formatting options table controls this.
+If a table has no sub-tables, and if the number of elements in is less than `inline_size`, then the table is output on one line.
+
+The `pretty` formatting parameters sets `inline_size` to `math.huge`, so all simple tables are output on one line.
+The `classic` formatting parameters sets `inline_size` to `0`, so no inlining is ever done.
+
+More sophisticated limits might incorporate the number of characters it takes to describe a simple table.
+
+## Ordered Iteration
+
+In Lua, the storage order for the elements in a general key-value table is undefined.
+For example, if you have a little snippet of code like:
+```lua
+local tbl = {
+    first = 'Minnie',
+    last = 'Mouse',
+    email = 'minnie@disney.com'
+}
+for k, v in pairs(tbl) do
+    print(k, "=", v)
+end
+```
+Run it several times, and you will see that the output order is not fixed!
+
+On the first run, you might get:
+```txt
+email	=	minnie@disney.com
+first	=	Minnie
+last	=	Mouse
+```
+On the next:
+```txt
+last	=	Mouse
+email	=	minnie@disney.com
+first	=	Minnie
+```
+And so on.
+
+This is not the case for Lua arrays stored in the natural increasing index order.
+
+Seeing different outputs every time you print a table can be disconcerting, so `scribe` can fix the element output order for general key-value tables.
+This is controlled by the `comparator` field in the formatting options table.
+
+If that parameter is explicitly set to `false`,  `scribe` will iterate through tables using the standard `pairs` method.
+The output order of the elements is then undefined and will vary from run to run.
+
+If the `comparator` field is left empty, then Scribe will iterate through tables in a predefined manner.
+The default sorting function orders the keys alphanumerically by type first and then value.
+The `number` type comes before the `string` type, so typically, the array part of any table appears first.
+
+You can also set the `comparator` value to a custom function `cmp(k1, k2)` that takes two keys `k1` and `k2` and returns `true` if you want `k1` to come before `k2` when you print the table.
+
+All the standard option sets set the `comparator` field to the default key comparison method.
+This means that for our Disney example, `print(scribe(tbl))` will *always* output:
+```txt
+{ email = "minnie@disney.com", first = "Minnie", last = "Mouse" }
+```
+You can see that the table appears with its keys sorted in increasing alphabetical order.
+
+You can change the order by passing a custom comparator function in the `overrides` argument:
+```lua
+print(scribe(tbl, { comparator = function(a,b) return a > b end }))
+```
+This will output the table with the keys sorted in decreasing alphabetical order.
+```txt
+{ last = "Mouse", first = "Minnie", email = "minnie@disney.com" }
+```
+
+This works fine on a one-off basis.
+See the [customisation](/pages/custom-options.qmd) page to set that as a new default.
+
+## Path References
+
+If a table has shared references, Scribe will output the full definition of the table at the shallowest depth possible.
+After that, it will use a path string to reference the shared table.
+
+If the `path_root` field is  `table`, then a reference to the table itself will be the path `<table>`.
+
+More commonly, you will get paths like `<foo.bar>`, which refers to the value found by following the  key chain `foo.bar` from the root table,
+If the root table is `tbl`, then that path reference is to the value `tbl[foo][bar]`.
+
+## The Default Format
+
+A default set of formatting options is used when you call `scribe(tbl)` without any second argument.
+Out of the box, this is `scribe.options.inline`, which means `scribe(tbl)` returns a one-line string representation of `tbl`.
+
+You can change that to, say, a multiline string for all tables by:
+```lua
+ scribe.options.default = scribe.options.pretty
+```
+From then on, `scribe(tbl)` will be the same as `scribe.pretty`.
+
+## See Also
+
+[Standard Options](/pages/standard-formats.qmd)              <br>
+[Custom Options](/pages/custom-options.qmd)                  <br>
+[Object-to-String Conversions](/pages/stringification.qmd)   <br>
+[Formatted Output](/pages/formatted-output.qmd)              <br>
+[Turning the Tables ... ](/pages/tutorial/index.qmd)

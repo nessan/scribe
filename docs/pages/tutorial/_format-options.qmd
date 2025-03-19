@@ -1,0 +1,199 @@
+## Formatting Options
+
+There are already quite a few parameters at the top of the `table_string` function that the user might want to set, and more are to come.
+
+Formatting problems, such as the one here and UI settings for many programs, are notorious for having numerous settable parameters.
+If a parameter is missing, it should default to some reasonable value.
+
+We could continue adding arguments to the function, but that's not a great idea.
+```lua
+table_string(tbl, indent, table_begin, table_end, key_begin, key_end, sep)
+```
+This calling signature is not user-friendly.
+It is too verbose and error-prone.
+It's easy to forget the arguments' order or leave one out.
+
+Some languages have the idea of *named* arguments, which greatly help in this situation.
+Lua doesn't directly support named parameters but has a versatile `table` object.
+We can pack all the formatting options into a table and pass that table as a single argument:
+```lua
+table_string(tbl, opts)
+```
+`opts` is a table that holds all our formatting parameters.
+For example, we might query `opts.indent` for the desired tab size, etc.
+
+The `opts` argument itself should be optional.
+For now, we'll assume that if it is present, it has all the fields we need---it is *fully defined*.
+
+Let's set up a *default* fallback table of formatting options that might look like this:
+```lua
+local pretty_options = {
+    indent      = '    ',
+    table_begin = '{',
+    table_end   = '}',
+    key_begin   = '',
+    key_end     = ' = ',
+    sep         = ','
+}
+```
+
+We should have a few different sets of formatting options.
+For example, we would like a multiline version, as well as a more compact, inline version.
+We can set up a table of options for each of these, so let's start with that pretty version:
+```lua
+local options = {}                                                                      -- <1>
+options.pretty = {                                                                      -- <2>
+    indent      = '    ',
+    table_begin = '{',
+    table_end   = '}',
+    key_begin   = '',
+    key_end     = ' = ',
+    sep         = ','
+}
+```
+1. We set up a table to hold all our tables of formatting parameters.
+2. We set up a sub-table `options.pretty` of options for the pretty version.
+
+To use this, our primary `table_string` function becomes:
+```lua
+function table_string(tbl, opts)                                                        -- <1>
+    opts = opts or options.pretty                                                    -- <2>
+
+    local indent = opts.indent                                                          -- <3>
+    local nl     = indent == '' and '' or '\n'
+    local tb     = opts.table_begin .. nl                                               -- <4>
+    local te     = nl .. opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end                                         -- <5>
+    local sep    = opts.sep .. nl                                                       -- <6>
+
+    local content = ''
+    for k, v in pairs(tbl) do
+        local k_string = kb .. tostring(k) .. ke
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, opts)    -- <7>
+        content = content .. indent .. k_string .. v_string .. sep
+    end
+    return tb .. content .. te
+end
+```
+1. We changed the calling signature to incorporate an optional table of formatting parameters.
+2. We use the `options.pretty` table if' options' is absent.
+3. Grab the `indent` field from the `opts` table.
+4. We unpack the `opts` table into local variables for convenience where `tb` is `table_begin`, etc.
+5. We unpack the `opts` table into local variables for convenience where `kb` is `key_begin`, etc.
+6. Localise the element separator.
+7. Remember to pass the `opts` table to the recursive call!
+
+We can now call `print(table_string(mouse))` and get the same output as before:
+```txt
+{
+ last = Mouse,
+ first = Minnie,
+
+}
+```
+
+Let's add a set of options that is specifically for one-line output.
+We start with a little function to make a shallow clone of any table:
+```lua
+local function table_clone(tbl)
+    local retval = {}
+    for k,v in pairs(tbl) do retval[k] = v end
+    return retval
+end
+```
+Then we can easily set up `options.inline`:
+```lua
+options.inline = table_clone(options.pretty) -- <1>
+options.inline.indent = ''                   -- <2>
+```
+1. We make a shallow copy of `options.pretty` and then override the fields we want to change.
+2. We set `indent` to an empty string.
+
+Now we can call `print(table_string(mouse, options.inline))` and get:
+```txt
+{last = Mouse,first = Minnie,}  # <1>
+```
+1. Still have that pesky trailing comma, but we'll fix that soon.
+
+The inline version looks cramped.
+One way to improve things is to add some spaces to the table delimiters and element separator:
+```lua
+options.inline = table_clone(options.pretty)
+options.inline.indent      = ''
+options.inline.table_begin = '{ '             -- <1>
+options.inline.table_end   = ' }'
+options.inline.sep         = ', '             -- <2>
+```
+1. Add some breathing room between the table delimiters and the content.
+2. Space out the table elements.
+
+An alternate approach is to add those spaces on the fly when needed.
+Some inline formats want to be as compact as possible, so we can make adding those spaces a formatting option:
+```lua
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' '         -- <1>
+}
+
+options.inline = table_clone(options.pretty)
+options.inline.indent = ''
+```
+1. As the name suggests, `inline_spacer` controls how generous the spacing is for the inline version of a set of formatting options.
+
+Here's how we use that new formatting field:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local tb, te = opts.table_begin, opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+
+    local nl = indent == '' and opts.inline_spacer or '\n' -- <1>
+    sep = sep .. nl
+    tb  = tb  .. nl
+    te  = nl  .. te
+
+    local content = ''
+    for k, v in pairs(tbl) do
+        local k_string = kb .. tostring(k) .. ke
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, opts)
+        content = content .. indent .. k_string .. v_string .. sep
+    end
+    return tb .. content .. te
+end
+```
+1. If there is an indentation, then `nl` is a newline character; otherwise its the user-configurable spacer.
+
+Finally, we add a couple of convenience functions that package `table_string` with a specific set of options:
+```lua
+function pretty(tbl) return
+    table_string(tbl, options.pretty)
+end
+
+function inline(tbl)
+    return table_string(tbl, options.inline)
+end
+```
+For example, `print(inline(mouse))` now returns:
+```txt
+{ last = Mouse, first = Minnie, }
+```
+`print(pretty(mouse))` returns:
+```txt
+{
+ last = Mouse,
+ first = Minnie,
+
+}
+```
+
+TIP: Adding small facade functions like `pretty` and `inline` can make the API more user-friendly.
+Providing a few of these functions for everyday use cases is a good idea.
+

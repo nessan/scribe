@@ -1,0 +1,188 @@
+## Adding Indentation
+
+Earlier, we alluded that while our solution does *something* for nested sub-tables by recursion, it certainly gets indentation screwed up in the process.
+
+Suppose we introduce a table that captures Minnie's "user profile" and try to print it:
+```
+local user =
+{
+ first = "Minnie",
+ last = "Mouse",
+ friends = { "Mickey", "Goofy" }     -- <1>
+}
+```
+1. Minnie's friends are captured in an array.
+
+Then, `print(pretty(user))` might yield:
+```txt
+{
+ first = Minnie,
+ friends = [         # <1>
+ Mickey,
+ Goofy
+],
+ last = Mouse
+}
+```
+1. We see `friends` as a nice array, but the indentation is incorrect.
+
+Ideally, we'd like to see:
+```txt
+{
+ friends = [
+ Mickey,
+ Goofy
+ ],
+ first = Minnie,
+ last = Mouse
+}
+```
+
+Our current output is readable but gets less and less with larger tables and more nesting.
+*Deeper* nesting requires more indentation!
+We better fix that next.
+
+The most straightforward idea is to add indentation to the string returned from the recursive call `table_string(v, opts)`.
+
+We can make a function that adds indentation *line-by-line* to any Lua string:
+```lua
+local function indent_string(str, indent)
+    if not indent or indent == "" or not str or str == "" then return str end   -- <1>
+    local ends_with_newline = str:sub(-1) == "\n"                               -- <2>
+    local indented_str = ""
+    local first_line = true                                                     -- <3>
+    for line in str:gmatch("([^\n]*)\n?") do                                    -- <4>
+        if not first_line then indented_str = indented_str .. "\n" end          -- <5>
+        indented_str = indented_str .. indent .. line
+        first_line = false
+    end
+    if ends_with_newline then indented_str = indented_str .. "\n" end           -- <6>
+    return indented_str
+end
+```
+1. Handle some edge cases, as we do not need to do anything if the `indent` is the empty string. This check allows downstream methods to call `indent_string` without worrying that it will do something stupid.
+2. We will add the indentation line-by-line. If the input `str` ends with a new line, the output should also.
+3. This looks like that guard "trick" we discussed earlier.
+4. Here, we iterate through `str` line-by-line with an unknown number of hits using Lua's pattern search function `gmatch`.
+5. Add newline characters to all *but* the first line.
+6. Match the input --- if it ends with a new line, the output will also.
+
+### Aside: Lua Patterns
+
+The `gmatch` method added to the string class is another type of iterator.
+In this case, it looks for a *pattern* in the string `str` and returns the *next* match.
+When it can find no more matches, it returns `nil` and the iteration loop finishes.
+
+Lua string patterns are like regular expressions in other languages, though they use fewer features.
+For example, if we have the string `"ho,  ho, ho"` then the pattern `"ho"` matches the literal character `'h'` followed immediately by `'o'`.
+We might use it like this:
+```lua
+local str = "ho, ho, ho"
+local count = 0
+for _ in str:gmatch("ho") do
+    count = count + 1
+    print("Found", count)
+end
+```
+That will output:
+```txt
+Found 1
+Found 2
+Found 3
+```
+
+Of course, if `gmatch` and friends could only find literal matches, they wouldn't be powerful enough for most applications.
+While Lua's pattern-matching library is slim, fortunately, it's not *that* slim.
+Lua patterns can encompass *classes* of characters instead of literal ones.
+
+In the `indent_string` function, the pattern we successively match on is `"([^\n]*)\n?"`.
+This has many characteristic elements of a regular expression: it is terse and full of punctuation characters!
+
+If you remove the parentheses, you have `"[^\n]*\n?"`.
+The first part `"[^\n]"` simply says to look for a substring that starts with *either* the beginning of the string (denoted by the magic character, the caret `'^'`) *or* the newline character `'\n'`.
+In patterns, you create "ors" with square brackets, so `"[xyz]"` will match on `'x'` *or* `'y'` *or* `'z'`.
+The next part, ' "*\n?"` starts with another magic character `'*'` that matches *anything*.
+The `'?'` is another magic incantation; in this case, it tells the pattern matcher that the previous character (the newline character) is optional.
+
+In all, the `"[^\n]*\n?" pattern says to match on a substring that starts at the beginning of the string or a newline character and finishes when you hit a newline character or run out of string.
+
+The only thing missing is telling the pattern-matching engine which bits of the pattern constitute the substring we want.
+What should the pattern matcher *capture*?
+
+That is what the parentheses are used for.
+The engine will capture whatever you put inside parentheses.
+In this case, we have parentheses around the first bit `"([^\n]*)\n?"` so we capture everything from either the string start *or* a newline character *until* we hit a newline character or the end of the string.
+In other words, we capture a line in the string.
+The `g` in `gmatch` stands for "global," so it doesn't stop at the first line but keeps iterating through the whole string line by line.
+
+### Indenting Tables
+
+With the `indent_string` method in place, we can rewrite our primary function:
+```lua
+function table_string(tbl, opts)
+    ...
+    for k, v in pairs(tbl) do
+        ...
+        local v_string = ''
+        if type(v) == 'table' then
+            v_string = table_string(v, opts)
+            v_string = indent_string(v_string, indent)
+        else
+            v_string = tostring(v)
+        end
+        ...
+    end
+    ...
+    return retval
+end
+```
+
+With those changes, we can call `print(pretty(user))` and get:
+```txt
+{
+ friends =     [
+ Mickey,
+ Goofy
+ ],
+ last = Mouse,
+ first = Minnie
+}
+```
+The elements in the `friends` array are now indented correctly, but the opening brace is also indented.
+
+We can alter our `indent_string` function to ignore the first line optionally:
+```lua
+local function indent_string(str, indent, ignore_first_line)                        -- <1>
+    ignore_first_line = ignore_first_line or false                                  -- <2>
+    if not indent or indent == "" or not str or str == "" then return str end
+    local ends_with_newline = str:sub(-1) == "\n"
+    local indented_str = ""
+    local first_line = true
+    for line in str:gmatch("([^\n]*)\n?") do
+        if not first_line then indented_str = indented_str .. '\n' end
+        local tab = first_line and ignore_first_line and '' or indent
+        indented_str = indented_str .. tab .. line
+        first_line = false
+    end
+    if ends_with_newline then indented_str = indented_str .. "\n" end
+    return indented_str
+end
+```
+1. We have added an optional boolean parameter `ignore_first_line` to the function.
+2. If the user doesn't provide a value for `ignore_first_line`, we default to `false`.
+
+With those changes, we can call `print(pretty(user))` and get:
+```txt
+{
+ friends = [
+ Mickey,
+ Goofy
+ ],
+ last = Mouse,
+ first = Minnie
+}
+```
+The inline format `print(inline(user))` is also correct:
+```txt
+{ last = Mouse, first = Minnie, friends = [ Mickey, Goofy ] }
+```

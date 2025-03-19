@@ -1,0 +1,254 @@
+## The Comma Problem
+
+It's time to eliminate the "comma" problem, which is done by not adding the element separator after the last element.
+
+Let's start with Lua *arrays*, which are tables you can iterate through using indices:
+```lua
+for i = 1, #tbl do -- <1>
+    ...
+end
+```
+1. `#tbl` is a built-in Lua function that returns the number of elements in the *array* part of `tbl`.
+
+
+For arrays, we always know when we are at the last element.
+
+We can replace the line that looks like this:
+```lua
+    ...
+        content = content .. indent .. k_string .. v_string .. sep
+    ...
+```
+with
+```lua
+    ...
+        content = content .. indent .. k_string .. v_string
+        if i + 1 < #tbl then content = content .. sep end -- <1>
+    ...
+```
+1. We are using `i` as the current element index, and if we're at the end of the array, we avoid adding a separator.
+
+However, we want to handle all Lua tables, which may or may not be arrays.
+Unfortunately, we cannot rely on `#tbl` to return the number of elements in a general `tbl`.
+If we have the Lua array of strings:
+```lua
+local friends = { "Mickey", "Goofy" }
+```
+Then `#friends` will return `2.`
+
+If, instead, we have a general table that happens to have some key-value elements like:
+```lua
+local mouse_in_characters =
+{
+    'a', 'b', first = "Minnie", last = "Mouse", 'c', 'd'
+}
+```
+Then `#mouse_in_characters` returns `4`!
+
+Even though we have deliberately written `mouse_in_characters` as a couple of key-value elements *surrounded* by straight array elements, Lua will aggregate the array elements `{a, b, c, d}` into an array part for the table and, under the covers, keep the two key-value elements in a separate hash map.
+If you try:
+```lua
+for i = 1, #mouse_in_characters do
+    print(mouse_in_characters[i])
+end
+```
+Out pops:
+```txt
+a
+b
+c
+d
+```
+We cannot access the "dictionary" part of the table this way!
+
+CAUTION: Lua tables can be arrays, dictionaries, or both in a single instance!
+This makes Lua tables very flexible, but it can also be a source of confusion.
+I suspect it wasn't a great design decision, as it makes it harder to write general-purpose functions that work with arrays and dictionaries, which are very different data structures.
+It is what it is, and we must work with it.
+
+### Using an Extra Pass
+
+However, we know that the `pairs` function will access **all** the table elements:
+```lua
+for k, v in  pairs(mouse_in_characters) do
+    print('key', k, 'value', v)
+end
+```
+Yields
+```txt
+key 1       value   a       # <1>
+key 2       value   b
+key 3       value   c
+key 4       value   d
+key last    value   Mouse   # <2>
+key first   value   Minnie
+```
+1. The "array" elements will always come first and always in the natural order.
+2. The general key-value elements come next but in an undefined order that changes from run to run.
+
+So, for the price of an extra pass, we can compute the number of elements in *any* table:
+```lua
+local function table_size(tbl)
+    local size = 0
+    for _,_ in pairs(tbl) do size = size + 1 end
+    return size
+end
+```
+Then `print(table_size(mouse_in_characters))` will return `6`.
+
+We can use `table_size` in our `table_string` function:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local tb, te = opts.table_begin, opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+
+    local nl = indent == '' and opts.inline_spacer or '\n'
+    sep = sep .. nl
+    tb  = tb  .. nl
+    te  = nl  .. te
+
+    local content = ''
+    local i, size = 0, table_size(tbl)                                      -- <1>
+    for k, v in pairs(tbl) do
+        i = i + 1                                                           -- <2>
+        local k_string = kb .. tostring(k) .. ke
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, opts)
+        content = content .. indent .. k_string .. v_string
+        if i < size then content = content .. sep end                       -- <3>
+    end
+    return tb .. content .. te
+end
+```
+1. `i`' is the current element index running from `1` to `size`.
+2. Increment the element "index".
+3. Add the separator if we are not at the last element.
+
+With this version:
+```lua
+print(pretty(mouse))
+```
+Yields:
+```txt
+{
+ first = Minnie,
+ last = Mouse        # <1>
+}
+```
+1. Yeah! That extra comma is gone!
+
+`print(inline(mouse))` is also correct:
+```txt
+{ first = Minnie, last = Mouse }
+```
+
+### Using a Guard
+
+Using the `table_size` function means we make an extra pass through the table.
+
+We can avoid the extra pass by using a guard variable.
+While we cannot know when we are at the last element, we *do* know when we are at the first element.
+All elements except the first element have a preceding element separator.
+With that in mind, we can rearrange the main loop in `table_string`:
+```lua
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local tb, te = opts.table_begin, opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+
+    local nl = indent == '' and opts.inline_spacer or '\n'
+    sep = sep .. nl
+    tb  = tb  .. nl
+    te  = nl  .. te
+
+    local content = ''
+    local first_element = true                                                          -- <1>
+    for k, v in pairs(tbl) do
+        if first_element then first_element = false else content = content .. sep end   -- <2>
+        local k_string = kb .. tostring(k) .. ke
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, opts)
+        content = content .. indent .. k_string .. v_string
+    end
+    return tb .. content .. te
+end
+
+```
+1. We initialize `first_element` to `true`.
+2. If we're not at the first element, we start by adding an element-end delimiter before the current element.
+
+NOTE: This is a common idiom in Lua for handling iterations where you must do something special for the final element.
+Instead, you do something special for the first element and then do the usual thing for all subsequent elements.
+
+This code version avoids the extra pass and still eliminates the trailing comma.
+```lua
+print(pretty(mouse))
+```
+Yields:
+```txt
+{
+ first = Minnie,
+ last = Mouse        # <1>
+}
+```
+
+NOTE: Computing the size of `tbl` does require an extra pass.
+However, as we shall see shortly, we can use that pass to gather other useful information, so we are happy enough to pay the price of some extra compute cycles.
+
+### Empty Tables
+
+We have one more issue to address.
+`print(pretty({}))` returns:
+```txt
+{
+}
+```
+`print(inline({}))` returns:
+```txt
+{   }
+```
+We would prefer to see `{}` in both cases.
+If we know the size of `tbl`, then we can add a quick check for an early return at the top of the function,
+```lua
+local function empty_table_string(opts)                                      -- <1>
+    local retval = (opts.table_begin .. opts.table_end):gsub('%s+', '')   -- <2>
+    return retval
+end
+
+function table_string(tbl, opts)
+    opts = opts or options.pretty
+
+    local size = table_size(tbl)
+    if size == 0 then return empty_table_string(opts) end                    -- <3>
+
+    local tb, te = opts.table_begin, opts.table_end
+    local kb, ke = opts.key_begin, opts.key_end
+    local sep    = opts.sep
+    local indent = opts.indent
+
+    local nl = indent == '' and opts.inline_spacer or '\n'
+    sep = sep .. nl
+    tb  = tb  .. nl
+    te  = nl  .. te
+    local content = ''
+    local i = 0
+    for k, v in pairs(tbl) do
+        i = i + 1
+        local k_string = kb .. tostring(k) .. ke
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, opts)
+        content = content .. indent .. k_string .. v_string
+        if i < size then content = content .. sep end
+    end
+    return tb .. content .. te
+end
+```
+1. We add a helper function to return a string for an empty table, taking into account the table delimiters.
+2. It does that by concatenating the table delimiters and then using `gsub` to remove all whitespace.
+3. In our `table_string` function we look for an early exit for empty tables.
+
+With this change in place, `print(pretty({}))` and `print(inline({}))` both return `{}`.

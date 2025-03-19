@@ -1,0 +1,104 @@
+---
+title: Custom Formatting Options
+---
+
+## Introduction
+
+As described in the [Standard Formats](/pages/standard-formats.qmd) page, you can directly access any of the pre-canned set of formatting options and change them at will.
+
+For example, if you would prefer that `putln("%t", tbl)` *always* produces very compact output you might have preliminary code like:
+```
+local scribe = require 'scribe'
+scribe.options.inline.inline_spacer =  ''
+scribe.options.inline.sep           =  ','
+scribe.options.inline.key_end       =  '='
+```
+After that, any call like `putln("Table: %t", {name = "Mary"})` produces the output `{name="Mary"}` instead of the prior result `{ name = "Mary" }`.
+This tighter style then remains in effect until you change those options back to their original settings.
+
+In the [Object-to-String](/pages/stringification.qmd) page we pointed out that the call `scribe.inline(obj)` can take an optional second argument.
+You might use it as:
+```
+local tbl = { name = "Mary" }
+local overrides = { inline_spacer = '', sep = ',', key_end = '='}
+print(scribe.inline(tbl, overrides))
+```
+which will produce the output `{name="Mary"}`.
+
+However, in this case:
+
+1. The `scribe.options.inline` table is unchanged.
+2. On return, the `overrides` table will be *fully* fleshed out *from* `scribe.options.inline`.
+
+This can be very handy when you are trying some experiments to hit on the precise output style you are after.
+Continue to tweak the `overrides` table until you are happy and only then use it to replace `scribe.options.inline`.
+
+## Example
+
+Here is an example where we choose to show all keys including array indices.
+We also change the way keys are shown by putting them in square braces.
+Finally we change the styling for shared references:
+```lua
+local my_options = {
+    show_indices = true,
+    key_begin    = '[',
+    key_end      = '] = ',
+    path_root    = 'ROOT',
+    path_sep     = ':'
+}
+```
+Let's use `my_options` to override the standard pretty-printing method:
+```lua
+local list = { p1 = { name = 'Alice' }, p2 = { name = 'Maria' } }
+list.p1.next = list.p2
+list.p2.prev = list.p1
+list.friends = { 'Tom', 'Dick', 'Harry' }
+list.home    = list
+print(scribe.pretty(list, my_options))
+```
+This gives the output:
+```txt
+<ROOT> = {
+    [friends] = [ [1] = "Tom", [2] = "Dick", [3] = "Harry" ],
+    [home] = <ROOT>,
+    [p1] = { [name] = "Alice", [next] = <p2> },
+    [p2] = { [name] = "Maria", [prev] = <p1> }
+}
+```
+
+After the call, we can look at the *full* version of `my_options` by pretty-printing it:
+```lua
+print(scribe.classic(my_options))
+```
+to get:
+```txt
+{
+    COMPLETE = true,
+    array_begin = "[",
+    array_end = "]",
+    comparator = <function>,
+    indent = "    ",
+    inline_size = inf,              # <1>
+    inline_spacer = " ",
+    key_begin = "[",
+    key_end = "] = ",
+    path_begin = "<",
+    path_end = ">",
+    path_root = "ROOT",
+    path_sep = ":",
+    sep = ",",
+    show_indices = true,
+    table_begin = "{",
+    table_end = "}",
+    use_metatable = true
+}
+```
+1. Here `inf` refers to infinity and corresponds to the Lua value `math.huge`.
+
+## See Also
+
+[Object-to-String Conversions](/pages/stringification.qmd)   <br>
+[Formatting Options](/pages/format-options.qmd)              <br>
+[Standard Options](/pages/standard-formats.qmd)              <br>
+[Formatted Output](/pages/formatted-output.qmd)              <br>
+[Turning the Tables ... ](/pages/tutorial/index.qmd)

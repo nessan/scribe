@@ -1,0 +1,119 @@
+Inline Format for "config_settings":
+{ app_name = "Magic-App", background_task = <thread>, debugging = false, features = { authentication = { oauth = true, saml = false }, default_UI = { darkMode = true, font_size = "medium" } }, languages = [ "English", "Spanish", "French", "German" ], log_file_handle = <userdata>, max_connections = 1001, on_launch = <function> }
+
+Pretty Format for "config_settings":
+{
+    app_name = "Magic-App",
+    background_task = <thread>,
+    debugging = false,
+    features = {
+        authentication = { oauth = true, saml = false },
+        default_UI = { darkMode = true, font_size = "medium" }
+    },
+    languages = [ "English", "Spanish", "French", "German" ],
+    log_file_handle = <userdata>,
+    max_connections = 1001,
+    on_launch = <function>
+}
+
+Classic Format for "config_settings":
+{
+    app_name = "Magic-App",
+    background_task = <thread>,
+    debugging = false,
+    features = {
+        authentication = {
+            oauth = true,
+            saml = false
+        },
+        default_UI = {
+            darkMode = true,
+            font_size = "medium"
+        }
+    },
+    languages = {
+        "English",
+        "Spanish",
+        "French",
+        "German"
+    },
+    log_file_handle = <userdata>,
+    max_connections = 1001,
+    on_launch = <function>
+}
+
+Alternate Format for "config_settings":
+app_name: "Magic-App",
+background_task: <thread>,
+debugging: false,
+features: 
+    authentication: 
+        oauth: true,
+        saml: false,
+    default_UI: 
+        darkMode: true,
+        font_size: "medium",
+languages: 
+    "English",
+    "Spanish",
+    "French",
+    "German",
+log_file_handle: <userdata>,
+max_connections: 1001,
+on_launch: <function>
+
+Inline JSON Format for "config_settings":
+{"app_name":"Magic-App","background_task":<thread>,"debugging":false,"features":{"authentication":{"oauth":true,"saml":false},"default_UI":{"darkMode":true,"font_size":"medium"}},"languages":["English","Spanish","French","German"],"log_file_handle":<userdata>,"max_connections":1001,"on_launch":<function>}
+
+JSON Format for "config_settings":
+{
+    "app_name": "Magic-App",
+    "background_task": <thread>,
+    "debugging": false,
+    "features": {
+        "authentication": {
+            "oauth": true,
+            "saml": false
+        },
+        "default_UI": {
+            "darkMode": true,
+            "font_size": "medium"
+        }
+    },
+    "languages": [
+        "English",
+        "Spanish",
+        "French",
+        "German"
+    ],
+    "log_file_handle": <userdata>,
+    "max_connections": 1001,
+    "on_launch": <function>
+}
+
+Debug Format for "config_settings":
+TABLE_BEGIN
+ INDENT  KEY_BEGIN "app_name" KEY_END = "Magic-App" SEP 
+ INDENT  KEY_BEGIN "background_task" KEY_END = <thread> SEP 
+ INDENT  KEY_BEGIN "debugging" KEY_END = false SEP 
+ INDENT  KEY_BEGIN "features" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "authentication" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  INDENT  KEY_BEGIN "oauth" KEY_END = true SEP 
+ INDENT  INDENT  INDENT  KEY_BEGIN "saml" KEY_END = false
+ INDENT  INDENT TABLE_END SEP 
+ INDENT  INDENT  KEY_BEGIN "default_UI" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  INDENT  KEY_BEGIN "darkMode" KEY_END = true SEP 
+ INDENT  INDENT  INDENT  KEY_BEGIN "font_size" KEY_END = "medium"
+ INDENT  INDENT TABLE_END
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "languages" KEY_END = ARRAY_BEGIN
+ INDENT  INDENT  KEY_BEGIN "1" KEY_END = "English" SEP 
+ INDENT  INDENT  KEY_BEGIN "2" KEY_END = "Spanish" SEP 
+ INDENT  INDENT  KEY_BEGIN "3" KEY_END = "French" SEP 
+ INDENT  INDENT  KEY_BEGIN "4" KEY_END = "German"
+ INDENT ARRAY_END SEP 
+ INDENT  KEY_BEGIN "log_file_handle" KEY_END = <userdata> SEP 
+ INDENT  KEY_BEGIN "max_connections" KEY_END = 1001 SEP 
+ INDENT  KEY_BEGIN "on_launch" KEY_END = <function>
+TABLE_END
+

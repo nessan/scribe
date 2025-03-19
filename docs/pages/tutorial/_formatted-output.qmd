@@ -1,0 +1,173 @@
+## Formatted Output
+
+Stringing together messages using concatenation quickly becomes cumbersome.
+
+Lua provides a simple way to format strings using the `string.format` method, similar to the {sprintf} function in C.
+```lua
+print(string.format("The value of %s is %.2f", 'pi', math.pi))
+```
+This prints `The value of pi is 3.14` to your screen.
+
+The format string `"The value of %s is %.2f"` is a template containing placeholders for the values you want to insert.
+It is a recipe for baking a string by replacing the placeholders with the trailing arguments to `string.format`.
+
+The general form for calling `string.format` is:
+```lua
+string.format(format_string, arg1, arg2, ...)
+```
+The first argument is the format string; the rest are the values that `string.format` will insert into the placeholders.
+It is a *variadic* function, which means it can take any number of arguments after the format string.
+
+Placeholders like `%s` and `%f` are format *specifiers* that tell `string.format` to look for a trailing argument that is a string and another that is a floating point number.
+The `.2` in `%.2f` is a format *modifier*, and it tells `string.format` to round the floating point number to two decimal places.
+The placeholders are replaced by the trailing arguments in the order they appear in the format string.
+
+`string.format` is identical to the venerable {sprintf} function in C, and it supports almost all the same format specifiers and modifiers.
+We already mentioned that it adds a couple of extra format specifiers, like `%q`, which are not available in C.
+It drops a few of the more esoteric format specifiers rarely used in practice.
+
+At some point, everyone recreates the same wrapper around `string.format` that looks like this:
+```lua
+function printf(format_string, ...)             -- <1>
+    print(string.format(format_string, ...))
+end
+```
+1. The name used here is `printf` to mimic the C function of the same name.
+
+You can use this function to print formatted strings like this:
+```lua
+printf("The value of %s is %.2f", 'pi', math.pi)
+```
+
+Creating formatted output using `string.format` is a big step up from concatenation, but it suffers from the problem of having no concept of a Lua table.
+The underlying C function is unaware of Lua's data structures, so it sees tables as a blob of memory and prints their address.
+
+### Adding Tables to the Mix
+
+Scribe provides a `scribe.format` function that is a drop-in replacement for `string.format` with the added ability to format Lua tables.
+```lua
+local person = {name = 'Alice', age = 42}
+print(scribe.format("Data: %t", person))
+```
+This prints `Data: { age = 42, name = "Alice" }` to your screen.
+
+We do this by adding a new format specifier, `%t`, that tells `scribe.format` to format the trailing argument as a table.
+We have added several new format specifiers that allow you to format Lua tables in various ways.
+
+It happens that `%t`, `%T`, `%j`, and `%J` were not already claimed as specifiers by `string.format`.
+Moreover, those specifiers are mnemonic and easy to remember:
+
+- `%t` formats a table as an inline string.
+- `%T` formats a table as a multiline string.
+- `%j` formats a table as a compact inline JSON string.
+- `%J` formats a table as a pretty-printed multiline JSON string.
+
+So, uppercase `%T` and `%J` are for multiline output, while lowercase `%t` and `%j` are for inline output.
+
+The signature for `scribe.format` is the same as `string.format`:
+```lua
+function M.format(template, ...)
+...
+end
+```
+The first argument is the format string; the rest are the values we will insert into the placeholders.
+
+We know that all placeholders have the form `%<modifier><specifier>`, where `<specifier>` is the only required part.
+Our new format specifiers `%t`, `%T`, `%j`, and `%J` are no different.
+
+Our custom `format` method looks for those new specifiers in the format string.
+If none exist, it calls `string.format` with the same arguments and returns the result.
+
+If it finds any new specifier, it formats the trailing table argument as a string according to the specifier.
+It can then replace the custom placeholder like `%t` in the format string with a `%s`.
+It also replaces the table argument with its formatted string description.
+At this point, it calls `string.format` with the modified format string and the rest of the arguments.
+
+The tricky part is using Lua's pattern matching to find the custom specifiers in the format string.
+
+```lua
+function M.format(template, ...)
+    if template == nil then return "" end                                                       -- <1>
+
+    local percent_rx = '%%+'                                                                    -- <2>
+    local modifier_rx = '[%-%+ #0]?%d*%.?[%d%*]*[hljztL]?[hl]?'
+    local specifier_rx = '[diuoxXfFeEgGaAcspqtTjJ]'                                             -- <3>
+    local placeholder_rx = string.format('%s(%s)(%s)', percent_rx, modifier_rx, specifier_rx)   -- <4>
+    local table_rx = percent_rx .. '%d*[tTjJ]'                                                  -- <5>
+
+    if not template:find(table_rx) then return string.format(template, ...) end                 -- <6>
+
+    local table_placeholders = {}                                                               -- <7>
+    local n_placeholders = 0
+    for mod, spec in template:gmatch(placeholder_rx) do                                         -- <8>
+        n_placeholders = n_placeholders + 1
+        if spec == 't' or spec == 'T' or spec == 'j' or spec == 'J' then
+            insert(table_placeholders, { n_placeholders, mod, spec })
+        end
+    end
+
+    local args = { ... }                                                                        -- <9>
+    if #args ~= n_placeholders then
+        return string.format("[FORMAT ERROR]: %q -- needs %d args but you sent %d!\n", template, n_placeholders, #args)
+    end
+
+    for i = 1, #table_placeholders do                                                           -- <10>
+        local index, mod, spec = unpack(table_placeholders[i])
+        local full_spec = mod .. spec
+
+        if full_spec == 't' then
+            args[index] = M.inline(args[index])
+        elseif full_spec == 'T' then
+            args[index] = M.pretty(args[index])
+        elseif full_spec == 'J' then
+            args[index] = M.json(args[index])
+        elseif full_spec == 'j' then
+            args[index] = M.inline_json(args[index])
+        else
+            return string.format("[FORMAT ERROR]: %q -- unknown table specifier: %q\n", template, full_spec)
+        end
+    end
+
+    template = template:gsub(table_rx, '%%s')                                                   -- <11>
+    return string.format(template, unpack(args))                                                -- <12>
+end
+```
+1. An edge case: if the format string is `nil`, we return an empty string.
+2. The pattern for matching one or more percent signs.
+3. The pattern for matching a format specifier.
+4. The pattern for matching a placeholder.
+5. The pattern for matching our table specifiers.
+6. If the format string contains no table specifiers, we can call `string.format` and return the result.
+7. We create space to store the positions of the table placeholders.
+8. We iterate over the placeholders in the format string and store the position of any table specifiers.
+9. We store the trailing arguments in a local variable.
+10. We iterate over the table placeholders and format the table arguments according to the specifier.
+11. We replace the table specifiers with `%s` in the format string.
+12. We call `string.format` with the modified format string and the rest of the arguments.
+
+A lot is going on here, but the key points are:
+- We use Lua's pattern matching to find the placeholders in the format string.
+- We store the positions of any table specifiers.
+- We format the table arguments according to the specifier.
+- We replace the table specifiers with `%s` in the format string.
+- We call `string.format` with the modified format string and the rest of the arguments.
+
+### More Facades
+
+We have added a few more facades to the `scribe` module to make it easier to work with formatted output.
+For example:
+```lua
+function M.put(template, ...)
+    io.stdout:write(M.format(template, ...))    -- <1>
+end
+```
+1. The `put` function is a simple wrapper around `scribe.format` that writes the formatted string to the standard output.
+
+A matching `putln` function appends a newline character to the same output.
+```lua
+function M.putln(template, ...)
+    io.stdout:write(M.format(template, ...), '\n')
+end
+```
+
+Corresponding `eput`, `eputln`, `fput`, and `fputln` functions write to the standard error stream and to files.

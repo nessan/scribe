@@ -1,0 +1,43 @@
+# Shortcuts and links used throughout the documentation.
+
+# Links to software tools, etc.
+repo: "[repository](https://github.com/nessan/scribe)"
+docs: "[documentation](https://nessan.github.io/scribe)"
+email: "[email](mailto:nzznfitz+gh@icloud.com)"
+mit-license: "[MIT License](https://opensource.org/license/mit)"
+quarto: "[Quarto](https://quarto.org)"
+inspect: "[`inspect`](https://github.com/kikito/inspect.lua)"
+penlight: "[Penlight](https://github.com/lunarmodules/Penlight)"
+sprintf: "[`sprintf`](https://en.cppreference.com/w/c/io/fprintf)"
+Lua: "[Lua](https://www.lua.org)"
+ZeroBrane: "[ZeroBrane Studio](https://studio.zerobrane.com)"
+VSCode: "[Visual Studio Code](https://code.visualstudio.com)"
+VSCode-Lua: "[Lua for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=sumneko.lua)"
+LuaRock": "[LuaRocks](https://luarocks.org)"
+
+# The Lua reference manual:
+lua:
+  string: "[Lua's string library](https://www.lua.org/manual/5.4/manual.html#6.4)"
+  string-format: "[`string.format`](https://www.lua.org/manual/5.4/manual.html#6.4)"
+
+# Formatted links for the module's methods & tables
+scribe:
+  alt: "[`scribe.alt`](/pages/stringification.qmd)"
+  classic: "[`scribe.classic`](/pages/stringification.qmd)"
+  debug: "[`scribe.debug`](/pages/stringification.qmd)"
+  eput: "[`scribe.eput`](/pages/formatted-output.qmd)"
+  eputln: "[`scribe.eputln`](/pages/formatted-output.qmd)"
+  fill: "[`scribe.fill`](/pages/format-options.qmd)"
+  format: "[`scribe.format`](/pages/formatted-output.qmd)"
+  fput: "[`scribe.fput`](/pages/formatted-output.qmd)"
+  fputln: "[`scribe.fputln`](/pages/formatted-output.qmd)"
+  inline: "[`scribe.inline`](/pages/stringification.qmd)"
+  braced_inline: "[`scribe.braced_inline`](/pages/stringification.qmd)"
+  inline_json: "[`scribe.inline_json`](/pages/stringification.qmd)"
+  json: "[`scribe.json`](/pages/stringification.qmd)"
+  options: "[`scribe.options`](/pages/format-options.qmd)"
+  pretty: "[`scribe.pretty`](/pages/stringification.qmd)"
+  braced_pretty: "[`scribe.braced_pretty`](/pages/stringification.qmd)"
+  put: "[`scribe.put`](/pages/formatted-output.qmd)"
+  putln: "[`scribe.putln`](/pages/formatted-output.qmd)"
+  scribe: "[`scribe.scribe`](/pages/stringification.qmd)"

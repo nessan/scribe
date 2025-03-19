@@ -1,0 +1,175 @@
+## Metamethods
+
+We mentioned that any Lua table can have an associated *metatable*
+
+The metatable is a regular table with arbitrary data and methods like any other table.
+However, if a table `tbl` has a metatable `mt`, Lua will check for specially named methods, *metamethods*, in `mt` and use those in place of its built-in default operations.
+
+Metamethods, particularly the `__index` metamethod, are the keys to understanding how to use prototype and object-oriented methodologies in Lua.
+However, that isn't the topic for today.
+
+The one metamethod that interests us here is the `__tostring` function.
+(All Lua's metamethods start with double underscores).
+
+Here's an example where we create a metatable with a `__tostring` method inside it:
+```lua
+local count = 0                                         -- <1>
+local mt = {}                                           -- <2>
+function mt.__tostring(tbl)                             -- <3>
+    count = count + 1
+    return 'This is print number: ' .. tostring(count) .. ' for an array of size: ' .. #tbl -- <4>
+end
+```
+1. `count` will get incremented every time the `__tostring` metamethod is called.
+2. `mt` is just a regular empty Lua table.
+3. We add a function `__tostring` to `mt`.
+4. Every time `mt.__tostring` is called, we increment `count` and return a string with the latest count.
+
+You will frequently see the equivalent definition:
+```lua
+mt.__tostring = function(tbl)
+    count = count + 1
+    return 'This is print number: ' .. tostring(count) .. ' for an array of size: ' .. #tbl
+end
+```
+The former style is more in keeping with most other programming languages.
+If you plan on expanding your horizons beyond Lua, stick with that look.
+However, both styles are perfectly acceptable and produce identical byte code.
+
+For this metamethod to have any effect, we must attach its containing *metatable* to a Lua table using the `setmetatable` method:
+```lua
+local arr = { 1, 2, 3 }
+setmetatable(arr, mt)
+```
+
+TIP: If you just give `arr` a `__tostring` method directly, Lua will not make any redirection calls to it.
+For Lua to see a metamethod, you **must** put it in a metatable and attach the *metatable* to the parent object.
+The `setmetatable` call endows `tbl` with a hidden metatable.
+The existence of that metatable is what triggers Lua to redirect some of its operations to your custom definitions.
+Just adding metamethods directly to a table does nothing.
+
+Let's exercise that metamethod:
+```txt
+print(tostring(arr))
+print(tostring(arr))
+print(tostring(arr))
+print(tostring(arr))
+```
+This yields:
+```txt
+This is print number: 1 for an array of size 3
+This is print number: 2 for an array of size 3
+This is print number: 3 for an array of size 3
+This is print number: 4 for an array of size 3
+```
+
+The built-in `tostring` method now redirects calls to the `mt.__tostring` method.
+If we remove the metatable:
+```lua
+setmetatable(tbl, nil)
+```
+Then `tostring(tbl)` reverts to something like:
+```txt
+table: 0x15f852480
+```
+
+Well, suppose the user is sophisticated enough to have added a custom `__tostring` metamethod to return a custom string for a particular table or class of tables. In that case, we should honour their effort by using that method.
+
+We can add a call to the top of `table_string` to check for a custom `__tostring` metamethod and, if present, use that instead of our paltry efforts.
+
+However, it is best to make that optional, which we do by adding a field to our options table:
+```lua
+local options = {}
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' ',
+    show_indices  = false,
+    comparator    = compare,
+    inline_size   = math.huge,
+    path_root     = 'table',
+    path_sep      = '.',
+    path_begin    = '<',
+    path_end      = '>',
+    use_metatable = true,       -- <1>
+    COMPLETE      = true
+}
+```
+1. If `true` and if there is a custom `__tostring` metamethod, then we redirect the table conversion to that method.
+
+With that change, the top of the `table_string` looks like this:
+```lua
+local function table_string(root_tbl, opts)
+    ...
+    local function process(tbl, path)
+        if opts.use_metatable then                                          -- <1>
+            local mt = getmetatable(tbl)                                    -- <2>
+            if mt and mt.__tostring then return mt.__tostring(tbl) end      -- <3>
+        end
+        ...
+```
+1. Check whether we are allowed to use metamethods.
+2. Check whether `tbl` has a metatable.
+3. If `tbl` has an associated `__tostring` metamethod, invoke it and return early.
+
+For example, if:
+```lua
+local count = 0
+local mt = {}
+function mt.__tostring(tbl)
+    count = count + 1
+    return 'This is print number: ' .. tostring(count) .. ' for a table of size: ' .. #tbl
+end
+local tbl = { 1, 2, 3 }
+setmetatable(tbl, mt)
+```
+Then `print(pretty(tbl))` yields:
+```txt
+This is print number: 1 for a table of size: 3
+```
+### Why Optional?
+
+Can you guess why we made using any custom `__tostring` metamethod controllable as a format option?
+When wouldn't we want to use it?
+
+Metamethods like `__tostring` are usually attached to a whole *class* of tables instead of a particular instance.
+The method might do something specific to the class as a whole and then defer much of the work back to `scribe` to convert the instance data to a string.
+
+You then run into the danger of chasing your tail.
+The custom `__tostring` method calls `table_string`, which then calls the `__tostring` method and so on, ad infinitum!
+
+In this case, we must set the `opts.use_metatable` to `false` to break the cycle.
+
+Here's an example:
+```lua
+local count = 0
+local mt = {}
+function mt.__tostring(tbl)
+    count = count + 1
+    local tbl_options = { use_metatable = false }                           -- <1>
+    local tbl_string  = inline(tbl, tbl_options)
+    return 'Print: ' .. tostring(count) .. ' for table: ' .. tbl_string
+end
+```
+1. With this override, the following line will cause a stack overflow.
+
+Then:
+```lua
+local tbl = { 1, 2, 3 }
+setmetatable(tbl, mt)
+print(pretty(tbl))
+print(pretty(tbl))
+print(pretty(tbl))
+```
+Yields:
+```txt
+Print: 1 for table: [ 1, 2, 3 ]
+Print: 2 for table: [ 1, 2, 3 ]
+Print: 3 for table: [ 1, 2, 3 ]
+```

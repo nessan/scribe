@@ -1,0 +1,111 @@
+## First Shot at Tables
+
+At this point in your Lua journey, you probably search for "How do I convert a Lua table to a string?".
+You will find a lot of suggestions, some quite good and some not so good.
+
+But suppose you wish to build your very own solution based on the discovery that you can use the `pairs` function to iterate through a table.
+
+Well, you know that recursion is the touch of the hand of God and that Spidey sense is telling you this is the place to use it!
+
+With a little spare time on your hands, you come with code along the lines of:
+```lua
+function table_string(tbl)                      -- <1>
+    local indent = '    '                       -- <2>
+    local retval = '{\n'                        -- <3>
+    for k, v in pairs(tbl) do
+        retval = retval .. indent               -- <4>
+        retval = retval .. tostring(k) .. ' = ' -- <5>
+        if type(v) ~= 'table' then
+            retval = retval .. tostring(v)      -- <6>
+        else
+            retval = retval .. table_string(v)  -- <7>
+        end
+        retval = retval .. ',\n'                -- <8>
+    end
+    retval = retval ..  '\n}'                   -- <9>
+    return retval
+end
+```
+1. A descriptive function name. However, we should check that `tbl` is a Lua table!
+2. We hard code the `indent` to four spaces. <br> This is a parameter the user will want to set.
+3. Start the return string with a `{`and a newline character. <br> The user might want to set the table delimiters to something other than braces.
+4. Indent every key-value pair inside the table.
+5. Add the key `k` as a string and an assignment ` = `. <br> Another potentially user-settable parameter.
+6. The value `v` isn't a table. We can use `tostring` and add it to the return value.
+7. A sub-table! "Look, Ma, that's recursion. I'm a real programmer!""
+8. End the table element with a separator `,` followed by a newline character.
+9. Finally, close the string with a newline character and a matching table end-delimiter `}`.
+
+CAUTION: While we have begun handling nested sub-tables using recursion, this version will not get the indentation right.
+We'll come back to that problem shortly.
+
+You try it out on our little mouse by calling `print(table_string(mouse))`, which returns:
+```txt
+{
+ first = Minnie,
+ last = Mouse,       # <1>
+
+}
+```
+1. That's an annoying extra comma and newline character after the final table element.
+
+Overall, it’s not bad!
+There is that extra comma and new line that looks a bit off, and of course, if you run that `print(table_string(mouse))` a few times, you will see that the print order of the elements changes:
+```txt
+{
+ last = Mouse,
+ first = Minnie,     # <1>
+
+}
+```
+1. The element order changed, but the extra comma and newline character remains firmly in place.
+
+### Making `indent` a Parameter
+
+Before we tackle the extra comma and newline character, let's make `indent` a parameter.
+This is easy to do by adding a second optional argument to the function:
+```lua
+function table_string(tbl, indent)  -- <1>
+    indent = indent or '    '       -- <2>
+    ...
+```
+1. We add a second argument to the function, which should be a string.
+2. If the user doesn't provide a value for `indent`, we default to four spaces.
+
+Only multiline formats will ever use indentation.
+The output should be a single line if the function is called with an `indent` as the *empty string*.
+We can use this check to trigger inline versus multiline output:
+```lua
+function table_string(tbl, indent)
+    indent  = indent or '    '
+
+    local nl     = indent == '' and '' or '\n'              -- <1>
+    local retval = '{' .. nl                                -- <2>
+    for k, v in pairs(tbl) do
+        retval = retval .. indent
+        retval = retval .. tostring(k) .. ' = '
+        if type(v) ~= 'table' then
+            retval = retval .. tostring(v)
+        else
+            retval = retval .. table_string(v, indent)      -- <3>
+        end
+        retval = retval .. ',' .. nl                        -- <4>
+    end
+    retval = retval .. nl .. '}'                            -- <5>
+    return retval
+end
+```
+1. We parametrise the "newline character" `nl` and set it to the empty string for inline outputs.
+2. Instead of hard-coding the newline character, we add `nl` to the opening brace
+3. We pass `indent` to the recursive call.
+4. We add `nl` to the separator `,`.
+5. Finally, we add `nl` to the closing brace.
+
+TIP: Whenever you change the calling signature of a recursive function, you must update the recursive call to match.
+From experience, this is a common source of bugs.
+
+Now, if you call `print(table_string(mouse, ''))`, you will get:
+```txt
+{first = Minnie,last = Mouse,}
+```
+That's a single line with no newlines or indentation, though there is an extra trailing comma we need to eliminate.

@@ -1,0 +1,165 @@
+---
+title: Scribe
+---
+
+## Introduction
+
+Scribe converts Lua objects to readable strings.
+
+Scribe also has formatted output methods that make it easy to *print* tables.
+It adds formatting specifiers for tables to Lua's standard {lua.string-format} facility.
+Amongst others, Scribe uses `%t` to output tables on a single line and `%T` to pretty-print them on multiple lines.
+
+For example:
+```lua
+local putln = require('scribe').putln
+local arr = {1,2,3}
+putln("Array: %t", tbl)
+```
+This prints `Array: [ 1, 2, 3 ]` followed by a newline to `stdout`.
+
+Scribe gracefully handles complex tables, including ones with shared and cyclical references.
+The strings returned for those tables show the underlying structure in a manner that is as readable as possible.
+
+If you have:
+```lua
+local classes = {p1 = {subject = 'History', room = 401}, p2 = {subject = 'Spanish', room = 321}}
+classes.p1.next = classes.p2
+classes.p2.prev = classes.p1
+```
+Then `putln("Classes: %T", classes)` prints:
+```txt
+Classes: {
+    p1 = { next = <p2>, room = 401, subject = "History" },
+    p2 = { prev = <p1>, room = 321, subject = "Spanish" }
+}
+```
+
+You can customise `scribe` by passing a table of [formatting options](/pages/format-options.qmd).
+You can set many options, allowing for many table styles.
+
+That flexibility is great, but the number of available options can be daunting.
+Therefore, `scribe` has pre-defined [standard options](/pages/standard-formats.qmd) that work out of the box for most applications.
+Those include option sets and methods for turning tables in JSON-style strings.
+
+It is also easy to tweak one of those standards to achieve a [custom](/pages/custom-options.qmd) look for table strings.
+
+## Installation
+
+The module has no dependencies. <br>
+Copy the single `scribe.lua` file into a project and start to use it.
+
+## Conversion Methods
+
+If you have imported the module as
+```lua
+local scribe = require 'scribe'
+```
+Then, the following methods convert arbitrary Lua objects to readable strings.
+
+Click on a function name to get calling details, examples, etc.
+
+Method                 | Brief Description
+---------------------- | --------------------------------------------------------------------------
+{scribe.scribe}        | The most general string method. <br> This method can use custom formatting options.
+{scribe.inline}        | Single line output where arrays are delimited by `[ ... ]`. <br> General name-value tables are delimited by `{ ... }`.
+{scribe.pretty}        | Multiline format with the same delimiters as `inline`. <br> Simple, non-nested tables & arrays are on a single line.
+{scribe.classic}       | Multiline format where all tables are delimited by `{ ... }`. <br> No tables are inlined.
+{scribe.alt}           | An alternate, multiline format without table delimiters. <br> This uses indentation to show table structure.
+{scribe.json}          | Converts tables to a multiline JSON string format.
+{scribe.inline_json}   | Converts tables to a compact one-line JSON string format.
+{scribe.debug}         | Output tables as an abstract syntax tree. <br> Useful if you design a `scribe` option table.
+: {.bordered .striped .ver .responsive tbl-colwidths="[30,70]"}
+
+NOTE: `scribe(...)` is a succinct synonym for `scribe.scribe(...)`. <br>
+Out of the box, the one-argument version `scribe(object)` is the same as `scribe.inline(object)`.
+You can change that default to something else.
+
+## Formatting Options
+
+`scribe.inline`, etc., call `scribe(obj, options)` with a specific set of [pre-canned options](/pages/standard-formats.qmd).
+Those customise the output string to get a particular look.
+
+You can also supply your formatting options or add [tweaks](/pages/custom-options.qmd) to one of the standard sets.
+
+See {scribe.options} for all the details.
+
+## Formatted Output
+
+Beyond table-to-string conversions, Scribe provides functions to create and print formatted strings.
+
+Those functions build on Lua's {lua.string-format} capabilities by adding extra format specifiers for Lua tables.
+
+Method                 | Brief Description
+---------------------- | --------------------------------------------------------------------------
+{scribe.format}        | Builds a formatted string from a template string with placeholders. <br> The trailing arguments should supply values for those placeholders.
+{scribe.put}           | Writes a formatted string to `stdout`.
+{scribe.putln}         | Writes a formatted string followed by a newline to `stdout`.
+{scribe.eput}          | Writes a formatted string to `stderr`.
+{scribe.eput}          | Writes a formatted string followed by a newline to `stderr`.
+{scribe.fput}          | Writes a formatted string to the file `f`.
+{scribe.fput}          | Writes a formatted string followed by a newline to the file `f`.
+: {.bordered .striped .hover .responsive tbl-colwidths="[20,80]"}
+
+The various `*put*` methods use `scribe.format` to create a string from a *recipe* that can include instructions to convert tables to various styled strings and then output the result.
+
+## Format Specifiers
+
+As well as all the usual Lua format specifiers like `%s` for strings, Scribe recognises the following extra ones for tables:
+
+Specifier  | Brief Description of the Corresponding Table
+---------- | --------------------------------------------------------------------------------------
+`%t`       | A one-line string where arrays are delimited by `[ ... ]` and other tables by `{ ... }`
+`%T`       | A pretty multiline string where *simple* arrays and tables remain on one line. <br> Arrays are delimited by `[ ... ]` and other tables by `{ ... }`
+`%2T`      | A "classic" multiline string using curly brace delimiters and putting each element on its line.
+`%3T`      | A multiline string with no table delimiters. <br> Structure is shown using indentation alone.
+`%9T`      | A debug string showing the abstract structure of the table. Mainly for internal use.
+`%J`       | A multiline JSON string.
+`%j`       | A compact one-line JSON string.
+: {.bordered .striped .hover .responsive tbl-colwidths="[20,80]"}
+
+NOTE: The lower-case format table specifiers `%t` and `%j` always produce one-line strings.
+The upper-case specifiers generally produce multiline outputs.
+
+[Example:]{.bt}
+```lua
+local putln = require('scribe').putln
+local pupils = { { name = 'Mary', age = 12 }, { name = 'Joe', age = 11 } }
+putln("Our pupils: %T", pupils)
+```
+
+[Output:]{.bt}
+```txt
+Our pupils: [                       # <1>
+    { age = 12, name = "Mary" },    # <2>
+    { age = 11, name = "Joe" }
+]
+```
+1. `pupils` is an array of two tables so the outer delimiters are square brackets.
+2. Note that in this "pretty" `%T` format we print *simple* sub-tables on one line. See {scribe.pretty}.
+
+The same example can be output as a valid JSON array by calling `putln("%J", pupils)`,  which yields:
+
+[JSON Output:]{.bt}
+```json
+[
+    {                     // <1>
+        "age": 12,
+        "name": "Mary"
+    },
+    {
+        "age": 11,
+        "name": "Joe"
+    }
+]
+```
+1. The classic JSON multiline format puts *all* elements on separate lines.
+
+## See Also
+
+[Object-to-String Conversions](/pages/stringification.qmd)  <br>
+[Formatting Options](/pages/format-options.qmd)             <br>
+[Standard Options](/pages/standard-formats.qmd)             <br>
+[Custom Options](/pages/custom-options.qmd)                 <br>
+[Formatted Output](/pages/formatted-output.qmd)             <br>
+[Turning the Tables ... ](/pages/tutorial/index.qmd)

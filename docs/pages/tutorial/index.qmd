@@ -1,0 +1,29 @@
+---
+title: "Tutorial: Turning the Tables ..."
+
+format:
+  html:
+    toc: true
+    toc-expand: true
+    toc-depth: 2
+    toc-title: "Table of Contents"
+---
+
+{{< include _introduction.qmd >}}
+{{< include _types.qmd >}}
+{{< include _first-shot.qmd >}}
+{{< include _anatomy.qmd >}}
+{{< include _format-options.qmd >}}
+{{< include _commas.qmd >}}
+{{< include _arrays.qmd >}}
+{{< include _indentation.qmd >}}
+{{< include _other-formats.qmd >}}
+{{< include _ordering.qmd >}}
+{{< include _inlining.qmd >}}
+{{< include _metadata.qmd >}}
+{{< include _cycles.qmd >}}
+{{< include _breadth-first.qmd >}}
+{{< include _facade.qmd >}}
+{{< include _metamethods.qmd >}}
+{{< include _module.qmd >}}
+{{< include _formatted-output.qmd >}}

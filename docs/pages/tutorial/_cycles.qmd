@@ -1,0 +1,473 @@
+## Cyclical References
+
+If we look at a simple linked list example:
+```lua
+local stars =
+{
+    c1 = { first = "Mickey", last = "Mouse"},
+    c2 = { first = "Minnie", last = "Mouse"},
+}
+stars.c1.next = stars.c2
+```
+Then `print(pretty(stars))` returns:
+```txt
+{
+ c1 =
+ {
+ next =
+ {
+ first = Minnie,
+ last = Mouse
+ },
+ first = Mickey,
+ last = Mouse
+ },
+ c2 =
+ {
+ first = Minnie,
+ last = Mouse
+ }
+}
+```
+We see two definitions of `c2`! <br>
+One is in the `next` field for `c1` and another when we get to `c2` by itself.
+That's not ideal.
+
+Things get worse if we use a *doubly* linked list by adding:
+```lua
+stars.c2.prev = stars.c1
+```
+Now, when we try `print(pretty(stars))` the program will crash with a message like
+```txt
+/path/to/script: stack overflow                         # <1>
+stack traceback:
+ /path/to/script:49: in function 'table_size_and_type'
+ /path/to/script:98: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ ... (skipping 58803 levels)                          # <2>
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ /path/to/script: in function 'table_string'
+ (...tail calls...)                                  # <3>
+```
+1. Lua's interpreter has run out of room.
+2. That's a lot of skipping!
+3. It's more like tail chasing in this instance!
+
+It is easy to see what the issue is.
+When we convert `c1` to a string, it encounters a sub-table `c2`.
+Our function then calls itself with a request to convert `c2` to a string.
+That call, in its turn, will encounter `c2.prev = c1` and see that `c1` is a table.
+It handles that by calling itself with a request to convert `c1` to a string.
+And round and round we go!
+
+Our current solution doesn't handle tables with shared references well.
+Even if it manages to complete, the shared table will be defined multiple times.
+The situation is even worse if there are cycles to be navigated.
+Those cause the program to crash with a stack overflow,
+
+Lua makes it very easy to have tables with multiple references and cycles.
+Under the covers, the assignment `c2.prev = c1` sets up another *pointer* to `c1`.
+No copying is done; everything is very efficient.
+
+That's great for many algorithms you might use beyond the most straightforward, plain old data tables.
+We still need to examine and view those tables without crashes.
+
+### Crash Proofing
+
+The key to handling tables with cycles and shared references is marking those tables we have already put out a full string definition for.
+If we see those marked tables again, we can do something more sensible than trying to define them again and potentially going around in circles.
+
+Our `metadata` function returns a metadata table for each table and sub-table it encounters.
+Currently, there are just three fields in that metadata table: `size`, `array`, and `simple`.
+We can add a fourth field, `processed`, that will be `true` if we have already seen and processed that table.
+If the `processed` field is `true`, we can print a simple reference to the table instead of trying to define it again.
+If the field is *missing*, we can define the table as we do now.
+
+Here is what the `table_string` function looks like with the `processed` field added:
+```lua
+function table_string(root_tbl, opts)
+    opts = opts or options.pretty
+    local md = metadata(tbl)
+
+    local function process(tbl)
+        md[tbl].processed = true                                                            -- <1>
+        ...
+        for k, v in iter(tbl) do
+            i = i + 1
+            local k_string = show_keys and kb .. tostring(k) .. ke or ''
+            local v_string = ''
+            if type(v) == 'table' then
+                if md[v].processed then
+                    v_string = simple_string(v)                                             -- <2>
+                else
+                    v_string = process(v)                                                   -- <3>
+                    v_string = indent_string(v_string, opts.indent, delims)
+                    if delims == false and show_keys then v_string = nl .. v_string end
+                end
+            ...
+        end
+        return tb .. content .. te
+    end
+
+    local retval = process(root_tbl)
+    return retval
+end
+```
+1. We are about to process `tbl`, so we mark it as processed in case it has a self-reference.
+2. We have seen `v` before and can do something else instead of recursing. <br> Here, we print a reference to the table's address.
+3. Recurse into `v` and build up a complete definition for it.
+
+Now, if you try `print(pretty(stars))` on our doubly linked list of stars, you get something like this:
+```txt
+{
+ c1 = {
+ first = "Mickey",
+ last = "Mouse",
+ next = {
+ first = "Minnie",
+ last = "Mouse",
+ prev = 0x600002ec0ec0
+ }
+ },
+ c2 = 0x600002ec0f00,
+}
+ ```
+1. The shared references are just table addresses, which isn't user-friendly but better than crashing!
+
+We can even add a self-reference to the `stars` table like this:
+```lua
+stars.home = stars
+```
+Then `print(pretty(stars))` yields:
+```txt
+{
+ c1 = {
+ first = "Mickey",
+ last = "Mouse",
+ next = {
+ first = "Minnie",
+ last = "Mouse",
+ prev = 0x6000012ecec0
+ }
+ },
+ c2 = 0x6000012ecf00,
+ home = 0x6000012ece80
+}
+```
+
+### Paths
+
+That output is not very user-friendly.
+
+How should we see those references?
+Ideally, we should see an understandable *description* of the reference.
+
+Every table has a unique address in Lua, which we could use.
+However, as we saw above, that's not very user-friendly.
+We could use the key in the table that points to the shared table.
+That is better, but still not great.
+We could use a path to the table from the top-level root table.
+This is the best option.
+
+Then, in the case where there is no self-reference, we might see:
+```txt
+{
+ c2 =
+ {
+ first = Minnie,
+ prev =
+ {
+ first = Mickey,
+ next = <c1>,        # <1>
+ last = Mouse
+ },
+ last = Mouse
+ },
+ c1 = <c2.prev>              # <2>
+}
+```
+1. The value of `next` refers to the table at the path `c1`.
+2. The value of `c1` refers to the table at the path `c2.prev`.
+
+If the root table is `tbl`, then the path `"<foo.bar.baz>"` refers to the value `tbl.foo.bar.baz`.
+Thus, `foo` is a sub-table of `tbl`, `bar` is a sub-table of `foo`, and `baz` is a value in `bar`.
+
+If there is a self-reference, such as `stars.home = stars`, we might see:
+```txt
+<table> = {                 # <1>
+ c2 =
+ {
+ first = Minnie,
+ prev =
+ {
+ first = Mickey,
+ next = <c1>,    # <2>
+ last = Mouse
+ },
+ last = Mouse
+ },
+ c1 = <c2.prev>,
+ home = <table>          # <3>
+}
+```
+1. We only put out the `<table> = ...` line **if** there is a self-reference.
+2. We could use the full path, `<table.c1>`, here, but that is generally overkill.
+3. The value of `home` refers to the table itself.
+
+In this representation, there are some obvious user-settable options:
+- The string used for the root table if there are any top-level self-references. In the example, we use `table` for that.
+- The separator to use in the path string to sub-sub-tables etc. In the example, we use`"."`.
+- Perhaps the delimiters to use for path strings, which in the example are `<` and `> `.
+
+Let's add those to our `options.pretty` table:
+```lua
+local options = {}
+options.pretty = {
+    indent        = '    ',
+    table_begin   = '{',
+    table_end     = '}',
+    array_begin   = '[',
+    array_end     = ']',
+    key_begin     = '',
+    key_end       = ' = ',
+    sep           = ',',
+    inline_spacer = ' ',
+    show_indices  = false,
+    comparator    = compare,
+    inline_size   = math.huge,
+    path_root     = 'table', -- <1>
+    path_sep      = '.',     -- <2>
+    path_begin    = '<',     -- <3>
+    path_end      = '>'
+}
+```
+1. The string for the root table if there are any top-level self-references.
+2. The separator used in the path string to sub-sub-tables, etc.
+3. The delimiters used for the path string.
+
+With that in place, we can modify the `table_string` function as follows:
+```lua
+function table_string(root_tbl, opts)
+    opts = opts or options.pretty
+    local md = metadata(root_tbl)
+
+    local function process(tbl, path)                                               -- <1>
+        md[tbl].path = path                                                         -- <2>
+
+        local size   = md[tbl].size
+        if size == 0 then return empty_table_string(opts) end
+
+        local array  = md[tbl].array
+        local show_keys = not array and true or opts.show_indices
+
+        local simple = md[tbl].subs == 0 and size < opts.inline_size
+        local indent = simple and '' or opts.indent
+
+        local tb     = array and opts.array_begin or opts.table_begin
+        local te     = array and opts.array_end or opts.table_end
+        local kb, ke = opts.key_begin, opts.key_end
+        local pb, pe = opts.path_begin, opts.path_end                         -- <3>
+        local nl     = indent == '' and opts.inline_spacer or '\n'
+        local sep    = opts.sep .. nl
+
+        local delims = tb ~= ''
+        if delims then tb, te = tb .. nl, nl .. te  else indent = '' end
+
+        local content = ''
+        local i = 0
+        local iter = array and ipairs or ordered_pairs(opts.comparator)
+        for k, v in iter(tbl) do
+            i = i + 1
+            local k_string = show_keys and kb .. tostring(k) .. ke or ''
+            local v_string = ''
+            if type(v) == 'table' then
+                if md[v].path then
+                    v_string = pb .. md[v].path .. pe                               -- <4>
+                else
+                    local v_path = path .. opts.path_sep .. tostring(k)          -- <5>
+                    v_string = process(v, v_path)
+                    v_string = indent_string(v_string, opts.indent, delims)      -- <6>
+                    if delims == false and show_keys then v_string = nl .. v_string end
+                end
+            else
+                v_string = simple_string(v)
+            end
+            content = content .. indent .. k_string .. v_string
+            if i < size then content = content .. sep end
+        end
+        return tb .. content .. te
+    end
+
+    local retval = process(root_tbl, opts.path_root)                             -- <7>
+    return retval
+end
+```
+1. We have added an extra `path` argument.
+2. We record the path to this table `tbl` as the value under the metadata key `path` in `md[tbl]`.
+3. Localise the path-begin and path-end delimiters.
+4. If we have seen `v` before, we use the path string we stored in `md` for `v`, formatted with the delimiters.
+5. `v` is a new table, so we need a path to `v`, which we get by appending the key `k` to the current path.
+6. We recurse processing the contents of `v` using that new path string.
+7. Kick off the process with the root table and path.
+
+Now, if you try `print(pretty(stars))` on our doubly linked list of stars, we get:
+```txt
+{
+ c1 =
+ {
+ first = Mickey,
+ last = Mouse,
+ next =
+ {
+ first = Minnie,
+ last = Mouse,
+ prev = <table.c1>    # <1>
+ }
+ },
+ c2 = <table.c1.next>,
+ home = <table>               # <2>
+}
+```
+1. The value of `prev` refers to the path `table.c1`.
+2. The value of `home` refers to the table itself.
+
+In a reference like `<table.c1.next>`, the root path prefix `table.` isn't necessary.
+We will remove it in the next iteration.
+
+Complete self-references like our `home = <table>` line are uncommon, but we would like to have that `<table>` defined if it does occur.
+Something along these lines:
+```txt
+<table> = {
+ ...
+}
+```
+However, that extra `<table> = ` should only be present if there is a self-reference.
+
+We can alter `table_string` as follows:
+```lua
+function table_string(root_tbl, opts)
+    opts = opts or options.pretty
+    local md = metadata(root_tbl)
+
+    local root = root_tbl                                                             -- <1>
+    local root_ref = false                                                            -- <2>
+
+    local kb, ke = opts.key_begin, opts.key_end                                       -- <3>
+    local pb, pe = opts.path_begin, opts.path_end
+
+    local function process(tbl, path)
+        md[tbl].path = path
+        local path_prefix = path == opts.path_root and '' or path .. opts.path_sep    -- <4>
+
+        local size = md[tbl].size
+        if size == 0 then return empty_table_string(opts) end
+
+        local array = md[tbl].array
+        local show_keys = not array and true or opts.show_indices
+
+        local simple = md[tbl].subs == 0 and size < opts.inline_size
+        local indent = simple and '' or opts.indent
+
+        local tb = array and opts.array_begin or opts.table_begin
+        local te = array and opts.array_end or opts.table_end
+        local nl = indent == '' and opts.inline_spacer or '\n'
+        local sep = opts.sep .. nl
+
+        local delims = tb ~= ''
+        if delims then tb, te = tb .. nl, nl .. te else indent = '' end
+
+        local content = ''
+        local i = 0
+        local iter = array and ipairs or ordered_pairs(opts.comparator)
+        for k, v in iter(tbl) do
+            i = i + 1
+            local k_string = show_keys and kb .. tostring(k) .. ke or ''
+            local v_string = ''
+            if type(v) == 'table' then
+                if md[v].path then
+                    v_string = pb .. md[v].path .. pe
+                    if v == root then root_ref = true end                                   -- <5>
+                else
+                    local v_path = path_prefix .. tostring(k)                               -- <6>
+                    v_string = process(v, v_path)
+                    v_string = indent_string(v_string, opts.indent, delims)
+                    if delims == false and show_keys then v_string = nl .. v_string end
+                end
+            else
+                v_string = simple_string(v)
+            end
+            content = content .. indent .. k_string .. v_string
+            if i < size then content = content .. sep end
+        end
+        return tb .. content .. te
+    end
+
+    local retval = process(root_tbl, opts.path_root)
+    if root_ref then                                                                        -- <7>
+        retval = pb .. opts.path_root .. pe .. ' = ' .. retval
+    end
+    return retval
+end
+```
+1. We capture the root table in `root`.
+2. We capture whether there is a self-reference to the root table in `root_ref`.
+3. Localise some delimiters that never vary by context (hoist these constant lines from the `process` function).
+4. If this is not the root table, we will prepend any new path with a path prefix.
+5. We record the self-reference to the root table if `v` is the root table.
+6. We prepend the path with the path prefix if `tbl` is not the root table.
+7. If there is a self-reference to the root table, we prepend the return string with `<table> = `.
+
+Here's the output from the latest version of `print(pretty(stars))`:
+```txt
+<table> = {                # <1>
+ c1 =
+ {
+ first = Mickey,
+ last = Mouse,
+ next =
+ {
+ first = Minnie,
+ last = Mouse,
+ prev = <c1>
+ }
+ },
+ c2 = <c1.next>,         # <2>
+ home = <table>          # <3>
+}
+```
+1. There is a self-reference to the `stars` parent table, so we have prepended the string with `<table> = `.
+2. This looks better than `<table.c1.next>`.
+3. Here is the self-reference to the root table, which reads quite naturally.
+
+If we remove the `stars.home = stars` assignment then `print(pretty(stars))` returns:
+```txt
+{                          # <1>
+ c1 =
+ {
+ next =
+ {
+ first = Minnie,
+ prev = <c1>,
+ last = Mouse
+ },
+ first = Mickey,
+ last = Mouse
+ },
+ c2 = <c1.next>
+}
+```
+1. There is no self-reference, so we do not need that `<table> = ` we saw earlier.

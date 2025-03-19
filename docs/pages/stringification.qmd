@@ -1,0 +1,326 @@
+---
+title: Converting Lua Objects to Strings
+---
+
+## Introduction
+
+If you have loaded the `scribe` module as:
+```lua
+local scribe = require 'scribe'
+```
+Then, you have several functions for turning Lua objects into strings.
+
+The methods vary by the way they present Lua tables.
+Assuming you haven't altered the defaults as outlined in {scribe.options} then:
+
+Method                     | Returned String
+-------------------------- | ----------------------------------------------------------------
+`scribe.inline(obj)`       | A one-line string. <br> Arrays are delimited using square brackets `[ ... ]`. <br> Other tables are delimited using curly braces `{ ... }`.
+`scribe.pretty(obj)`       | A "pretty", generally multiline, string for tables. <br> Arrays are delimited using square brackets `[ ... ]`. <br> Other tables are delimited using curly braces `{ ... }`. <br> Simple tables & arrays with no nesting are shown on one line.
+`scribe.classic(obj)`      | A "classic" multiline format where elements are on their line. <br> Tables and arrays are delimited using curly braces `{ ... }`.
+`scribe.alt(obj)`          | An alternate multiline string for tables without delimiters. <br> Table structure is shown by indentation.
+`scribe.json(obj)`         | A multiline JSON string for tables.
+`scribe.inline_json(obj)`  | A compact one-line JSON string for tables.
+`scribe.debug(obj)`        | A string that exposes the structure of a table.
+`scribe.scribe(obj, opts)` | Parent function used by the other methods. <br> Converts `obj` to a string based on the `opts` formatting table.
+: {.bordered .striped .hover .responsive tbl-colwidths="[35,65]"}
+
+These methods are drop-in replacements for the standard Lua `tostring` function.
+They return a reasonable string for *any* Lua object.
+
+The methods differ in how they format Lua tables as strings.
+The first nine methods call on the final `scribe.scribe(obj, options)` with different values for the *options* argument.
+See the [Standard Options](/pages/standard-formats.qmd) page for details on the specific formatting values.
+
+TIP: Instead of calling `scribe.scribe(obj, opts)` you can call `scribe(obj, opts)`.
+The second argument is optional.
+If it's missing, we pass a default set of formatting options.
+Out of the box, those default options are the same as those used to produce one-line strings.
+
+NOTE: The only complex native Lua type is a table.
+In Lua, *arrays* are tables where the keys are successive integers starting at 1.
+Scribe has several output methods that mark arrays with different delimiters---by default, `[ ... ]` versus `{ ... }`.
+
+## Optional Overrides
+
+The `scribe` method can also take an extra *optional* argument `overrides`:
+```lua
+scribe(obj, options, overrides)
+```
+The `options` table is the primary set of formatting options used to display table objects.
+The optional `overrides` argument can tweak any field in that main set.
+If present, it should be a table.
+We extract any valid {scribe.options} field from it instead of the one in `options`.
+
+All the other methods above can also be passed `overrides` as an optional argument.
+
+For example:
+```lua
+scribe.inline(obj, overrides)
+```
+is the same as the call:
+```lua
+scribe(obj, scribe.options.inline, overrides)
+```
+
+Suppose you wish to delimit inline arrays with parentheses.
+You can achieve that by passing some overrides in a table to `scribe.inline`:
+```lua
+local my_options = { array_begin = '(', array_end = ')'}
+local fruits = {'Apple', 'Pear', 'Banana'}
+print(scribe.inline(fruits, my_options))
+```
+This returns the string `( "Apple", "Pear", "Banana" )`.
+
+On return, you can now use `my_options` as a completely independent set of formatting options.
+It will have been filled out with all the needed fields from, in this case, `scribe.options.inline`.
+To see that we can pretty print it!
+```lua
+putln("my_options: %2T", my_options)`
+```
+yields:
+```txt
+my_options: {
+    COMPLETE = true,
+    array_begin = "(",          # <1>
+    array_end = ")",
+    comparator = <function>,
+    indent = "",
+    inline_size = inf,          # <2>
+    inline_spacer = " ",
+    key_begin = "",
+    key_end = " = ",
+    path_begin = "<",
+    path_end = ">",
+    path_root = "table",
+    path_sep = ".",
+    sep = ",",
+    show_indices = false,
+    table_begin = "{",
+    table_end = "}",
+    use_metatable = true
+}
+```
+1. The `array_begin` and `array_end` fields have been set to `(` and `)` respectively.
+2. `inf` is a special value that means "infinity" accessible in Lua via `math.huge`.
+
+This means you could now completely replace `scribe.options.inline` if you wish by setting:
+```lua
+scribe.options.inline = my_options
+```
+Then `putln("Fruits: %t", fruits)` returns `Fruits: ( "Apple", "Pear", "Banana" )`.
+
+CAUTION: On return, the `overrides` argument will be expanded to include all the non-customised fields from the `options` table, which it overrides.
+
+## Optional Name
+
+The first seven methods above all can take an extra optional `string` argument.
+If present, we assume that it is a *name* you wish to embed in the returned string.
+
+For example, the whole calling sequence for `scribe.inline` is:
+```lua
+scribe.inline(obj, overrides, name)
+```
+The final two arguments are optional.
+
+Assuming `overrides` is a `table` and `name` is a `string`, then any of the following calls are valid:
+```lua
+scribe.inline(obj)
+scribe.inline(obj, overrides)
+scribe.inline(obj, name)
+scribe.inline(obj, overrides, name)
+scribe.inline(obj, name, overrides)
+```
+
+For the non-JSON methods, if the `name` argument is present, it just gets prepended to the returned string.
+```lua
+print(scribe.inline(fruits, "Fruits: "))
+```
+returns the string `Fruits: [ "Apple", "Pear", "Banana"  ]`.
+
+For the two JSON conversions, we assume you wish to "embed" the name in a JSON-like manner:
+```lua
+print(scribe.json(fruits, "Fruits"))
+```
+returns
+```txt
+{"Fruits": [
+    "Apple",
+    "Pear",
+    "Banana"
+]}
+```
+
+## Examples: Array
+
+We look at how each of those methods outputs a simple array.
+
+[Simple Array Input]{.bt}
+```lua
+local fruits = {'Apple', 'Pear', 'Banana'}
+print(scribe.inline(fruits,        'Inline Format:\n'),        '\n')
+print(scribe.pretty(fruits,        'Pretty Format:\n'),        '\n')
+print(scribe.classic(fruits,       'Classic Format:\n'),       '\n')
+print(scribe.alt(fruits,           'Alt Format:\n'),           '\n')
+print(scribe.inline_json(fruits,   'Inline-JSON-Format'),      '\n')
+print(scribe.json(fruits,          'JSON-Format'),             '\n')
+
+```
+
+[Simple Array Output]{.bt}
+```txt
+Inline Format:
+[ "Apple", "Pear", "Banana" ]                        # <1>
+
+Pretty Format:
+[ "Apple", "Pear", "Banana" ]                       # <2>
+
+Classic Format:                                     # <3>
+{
+    "Apple",
+    "Pear",
+    "Banana"
+}
+
+Alt Format:                                         # <4>
+    "Apple", "Pear", "Banana",
+"Apple",
+"Pear",
+"Banana"
+
+{"Inline-JSON-Format": ["Apple","Pear","Banana"]}   # <5>
+
+{"JSON-Format": [                                   # <6>
+    "Apple",
+    "Pear",
+    "Banana"
+]}
+```
+1. The table is printed on a single line using square bracket delimiters because `fruits` is an array.
+2. The table is "simple" with no nested sub-tables, so the `pretty` output is still on a single line.
+3. The "classic" format puts everything on its line and uses brace delimiters and indentation.
+4. The alternate multiline output doesn't use table delimiters and doesn't need indentation in this simple case.
+5. JSON always uses square braces to delimit arrays. <br> The inline version avoids white space as much as possible.
+6. This is a classic JSON multiline string for an array of values.
+
+## Example: Linked List
+
+Let's look at how some of the same methods output a "linked list":
+
+[Linked List Input]{.bt}
+```lua
+local list = {p1 = {name = 'Alice'}, p2 = {name = 'Maria'}}
+list.p1.next = list.p2
+list.p2.prev = list.p1
+
+print(scribe.inline(list,  'Inline Format:\n'), '\n')
+print(scribe.pretty(list,  'Pretty Format:\n'), '\n')
+print(scribe.alt(list,     'Alt Format:\n'),    '\n')
+print(scribe.classic(list, 'Classic Format:\n'))
+```
+
+[Linked List Output]{.bt}
+```txt
+Inline Format:
+{ p1 = { name = "Alice", next = <p2> }, p2 = { name = "Maria", prev = <p1> } }                  # <1>
+
+Pretty Format:
+{
+    p1 = {
+        name = "Alice",
+        next = <p2>
+    },
+    p2 = {
+        name = "Maria",
+        prev = <p1>
+    }
+}
+
+Alt Format:
+p1:
+    name: "Alice",
+    next: <p2>,
+p2:
+    name: "Maria",
+    prev: <p1>
+
+Classic Format:
+{
+    p1 = {
+        name = "Alice",
+        next = <p2>
+    },
+    p2 = {
+        name = "Maria",
+        prev = <p1>
+    }
+}
+```
+1. The table is printed on a single line. Path references show shared tables.
+
+## Another Example
+
+We look at the output for a doubly linked list.
+
+[Doubly Linked List Input]{.bt}
+```lua
+local a = { node = 'Thomas', payload = 10 }
+local b = { node = 'Harold', payload = 20 }
+local c = { node = 'Sloane', payload = 30 }
+local d = { node = 'Daphne', payload = 40 }
+
+a.next, b.next, c.next, d.next = b, c, d, d
+a.prev, b.prev, c.prev, d.prev = a, a, b, c
+local linked_list = { a, b, c, d }
+
+print(scribe.pretty(linked_list, "Pretty Format:\n"), '\n')
+print(scribe.alt(linked_list,    "Alt Format:\n"), '\n')
+```
+[Doubly Linked List Output]{.bt}
+```txt
+Pretty Format:
+[
+    1 = { next = <2>, node = "Thomas", payload = 10, prev = <1> },
+    2 = { next = <3>, node = "Harold", payload = 20, prev = <1> },
+    3 = { next = <4>, node = "Sloane", payload = 30, prev = <2> },
+    4 = { next = <4>, node = "Daphne", payload = 40, prev = <3> }
+]
+
+
+Alt Format:
+1:
+    next: <2>,
+    node: "Thomas",
+    payload: 10,
+    prev: <1>,
+2:
+    next: <3>,
+    node: "Harold",
+    payload: 20,
+    prev: <1>,
+3:
+    next: <4>,
+    node: "Sloane",
+    payload: 30,
+    prev: <2>,
+4:
+    next: <4>,
+    node: "Daphne",
+    payload: 40,
+    prev: <3>
+```
+
+Note that the array elements are shown inline in the `pretty` output.
+Those elements are simple tables with no nested sub-tables; the embedded `next` and `prev` fields reference other tables and do not count as sub-tables.
+
+The `alt` output shows the array elements on separate lines.
+
+Because we have cycles and references, we show all the array indices.
+
+## See Also
+
+[Formatting Options](/pages/format-options.qmd)         <br>
+[Standard Options](/pages/standard-formats.qmd)  <br>
+[Customising Options](/pages/custom-options.qmd)  <br>
+[Output Methods](/pages/formatted-output.qmd)              <br>
+[Turning the Tables ... ](/pages/tutorial/index.qmd)

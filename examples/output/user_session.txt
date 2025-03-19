@@ -1,0 +1,98 @@
+Inline Format for "user_session":
+{ preferences = { notifications = "enabled", privacy = { online_status = "invisible", share_location = false } }, user = { friends = [ "tom", "dick", "harry" ], name = "bill", preferences = <preferences>, session = <thread> } }
+
+Pretty Format for "user_session":
+{
+    preferences = {
+        notifications = "enabled",
+        privacy = { online_status = "invisible", share_location = false }
+    },
+    user = {
+        friends = [ "tom", "dick", "harry" ],
+        name = "bill",
+        preferences = <preferences>,
+        session = <thread>
+    }
+}
+
+Classic Format for "user_session":
+{
+    preferences = {
+        notifications = "enabled",
+        privacy = {
+            online_status = "invisible",
+            share_location = false
+        }
+    },
+    user = {
+        friends = {
+            "tom",
+            "dick",
+            "harry"
+        },
+        name = "bill",
+        preferences = <preferences>,
+        session = <thread>
+    }
+}
+
+Alternate Format for "user_session":
+preferences: 
+    notifications: "enabled",
+    privacy: 
+        online_status: "invisible",
+        share_location: false,
+user: 
+    friends: 
+        "tom",
+        "dick",
+        "harry",
+    name: "bill",
+    preferences: <preferences>,
+    session: <thread>
+
+Inline JSON Format for "user_session":
+{"preferences":{"notifications":"enabled","privacy":{"online_status":"invisible","share_location":false}},"user":{"friends":["tom","dick","harry"],"name":"bill","preferences":<preferences>,"session":<thread>}}
+
+JSON Format for "user_session":
+{
+    "preferences": {
+        "notifications": "enabled",
+        "privacy": {
+            "online_status": "invisible",
+            "share_location": false
+        }
+    },
+    "user": {
+        "friends": [
+            "tom",
+            "dick",
+            "harry"
+        ],
+        "name": "bill",
+        "preferences": <preferences>,
+        "session": <thread>
+    }
+}
+
+Debug Format for "user_session":
+TABLE_BEGIN
+ INDENT  KEY_BEGIN "preferences" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "notifications" KEY_END = "enabled" SEP 
+ INDENT  INDENT  KEY_BEGIN "privacy" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  INDENT  KEY_BEGIN "online_status" KEY_END = "invisible" SEP 
+ INDENT  INDENT  INDENT  KEY_BEGIN "share_location" KEY_END = false
+ INDENT  INDENT TABLE_END
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "user" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "friends" KEY_END = ARRAY_BEGIN
+ INDENT  INDENT  INDENT  KEY_BEGIN "1" KEY_END = "tom" SEP 
+ INDENT  INDENT  INDENT  KEY_BEGIN "2" KEY_END = "dick" SEP 
+ INDENT  INDENT  INDENT  KEY_BEGIN "3" KEY_END = "harry"
+ INDENT  INDENT ARRAY_END SEP 
+ INDENT  INDENT  KEY_BEGIN "name" KEY_END = "bill" SEP 
+ INDENT  INDENT  KEY_BEGIN "preferences" KEY_END = <preferences> SEP 
+ INDENT  INDENT  KEY_BEGIN "session" KEY_END = <thread>
+ INDENT TABLE_END
+TABLE_END
+

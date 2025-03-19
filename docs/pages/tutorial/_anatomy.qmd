@@ -1,0 +1,78 @@
+## Anatomy of a Table
+
+Although our current output string is flawed, nonetheless, it highlights the general structure for any table:
+```txt
+table-begin-delimiter
+ content
+table-end-delimiter
+```
+In our first attempt, the `table_begin` and `table_end` delimiters are the opening and closing braces surrounding the table content.
+The table delimiters should be user-configurable.
+
+The table content is a sequence of zero or more *elements*:
+```txt
+table-begin-delimiter
+ element,
+ element,
+ ...
+table-end-delimiter
+```
+
+Each element includes a key, possibly an assignment operator, and a value.
+Array "keys" are the array indices and are often not shown as they are implicit in the ordering of the values.
+
+In some formats like JSON, the keys must be enclosed in double-quotes.
+We can accommodate that requirement by introducing key delimiters, `key_begin` and `key_end`.
+The assignment operator can always be incorporated as part of `key_end`.
+
+Elements also have begin and end delimiters, though those vary according to context.
+In our current implementation, the element beginning delimiter is some indentation.
+The element ending delimiter is the comma character followed by a new line.
+This is the separator between elements in the table.
+
+The indentation amount and the element separator should be user-configurable.
+
+Using this terminology, we can rewrite our `table_string` function:
+```lua
+function table_string(tbl, indent)
+    indent = indent or '    '
+
+    local nl          = indent == '' and '' or '\n'
+    local table_begin = '{' .. nl                                                       -- <1>
+    local table_end   = nl .. '}'
+    local key_begin   = ''                                                              -- <2>
+    local key_end     = ' = '
+    local sep         = ',' .. nl                                                       -- <3>
+
+    local content = ''                                                                  -- <4>
+    for k, v in pairs(tbl) do
+        local k_string = key_begin .. tostring(k) .. key_end                            -- <5>
+        local v_string = type(v) ~= 'table' and tostring(v) or table_string(v, indent)  -- <6>
+        content = content .. indent .. k_string .. v_string .. sep                      -- <7>
+    end
+    return table_begin .. content .. table_end                                          -- <8>
+end
+```
+1. We introduce the table delimiters as parameters.
+2. We introduce the key delimiters as parameters.
+3. We introduce the element separator as a parameter.
+4. Capture the table content in `content`.
+5. Appropriate delimiters surround the key string. <br> We might cause this to disappear entirely if `tbl` is a Lua array.
+6. The value string may need to be found using recursion.
+7. Add the current element to the content.
+8. Finally, surround the table content with table delimiters.
+
+At first blush, this does not look like an improvement.
+It is undoubtedly more verbose.
+However, it is a step towards the goal of supporting many different output formats in one function.
+
+If we set `key_begin` and `key_end` to `'"'` and `'": '` respectively, we get:
+```txt
+{
+ "last": Mouse,
+ "first": Minnie,
+
+}
+```
+This is a good start on JSON output, but we still have the trailing comma problem, and the string values are not enclosed in double-quotes.
+We'll return to this later.

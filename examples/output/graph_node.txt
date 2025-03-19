@@ -1,0 +1,129 @@
+Inline Format for "graph_node":
+<table> = { connections = [ <table> ], metadata = { node_name = "Node1", node_type = "Root" }, project = { dependency_graph = { nodes = [ { links_to = <table>, name = "Node2" }, { links_to = [ <table> ], name = "Node3" } ], root = <table> }, root = <table> } }
+
+Pretty Format for "graph_node":
+<table> = {
+    connections = [ <table> ],
+    metadata = { node_name = "Node1", node_type = "Root" },
+    project = {
+        dependency_graph = {
+            nodes = [
+                { links_to = <table>, name = "Node2" },
+                {
+                    links_to = [ <table> ],
+                    name = "Node3"
+                }
+            ],
+            root = <table>
+        },
+        root = <table>
+    }
+}
+
+Classic Format for "graph_node":
+<table> = {
+    connections = {
+        <table>
+    },
+    metadata = {
+        node_name = "Node1",
+        node_type = "Root"
+    },
+    project = {
+        dependency_graph = {
+            nodes = {
+                {
+                    links_to = <table>,
+                    name = "Node2"
+                },
+                {
+                    links_to = {
+                        <table>
+                    },
+                    name = "Node3"
+                }
+            },
+            root = <table>
+        },
+        root = <table>
+    }
+}
+
+Alternate Format for "graph_node":
+<table> = connections: 
+    <table>,
+metadata: 
+    node_name: "Node1",
+    node_type: "Root",
+project: 
+    dependency_graph: 
+        nodes: 
+                links_to: <table>,
+                name: "Node2",
+                links_to: 
+                    <table>,
+                name: "Node3",
+        root: <table>,
+    root: <table>
+
+Inline JSON Format for "graph_node":
+<table> = {"connections":[<table>],"metadata":{"node_name":"Node1","node_type":"Root"},"project":{"dependency_graph":{"nodes":[{"links_to":<table>,"name":"Node2"},{"links_to":[<table>],"name":"Node3"}],"root":<table>},"root":<table>}}
+
+JSON Format for "graph_node":
+<table> = {
+    "connections": [
+        <table>
+    ],
+    "metadata": {
+        "node_name": "Node1",
+        "node_type": "Root"
+    },
+    "project": {
+        "dependency_graph": {
+            "nodes": [
+                {
+                    "links_to": <table>,
+                    "name": "Node2"
+                },
+                {
+                    "links_to": [
+                        <table>
+                    ],
+                    "name": "Node3"
+                }
+            ],
+            "root": <table>
+        },
+        "root": <table>
+    }
+}
+
+Debug Format for "graph_node":
+<table> = TABLE_BEGIN
+ INDENT  KEY_BEGIN "connections" KEY_END = ARRAY_BEGIN
+ INDENT  INDENT  KEY_BEGIN "1" KEY_END = <table>
+ INDENT ARRAY_END SEP 
+ INDENT  KEY_BEGIN "metadata" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "node_name" KEY_END = "Node1" SEP 
+ INDENT  INDENT  KEY_BEGIN "node_type" KEY_END = "Root"
+ INDENT TABLE_END SEP 
+ INDENT  KEY_BEGIN "project" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  KEY_BEGIN "dependency_graph" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  INDENT  KEY_BEGIN "nodes" KEY_END = ARRAY_BEGIN
+ INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "1" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "links_to" KEY_END = <table> SEP 
+ INDENT  INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "name" KEY_END = "Node2"
+ INDENT  INDENT  INDENT  INDENT TABLE_END SEP 
+ INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "2" KEY_END = TABLE_BEGIN
+ INDENT  INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "links_to" KEY_END = ARRAY_BEGIN
+ INDENT  INDENT  INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "1" KEY_END = <table>
+ INDENT  INDENT  INDENT  INDENT  INDENT ARRAY_END SEP 
+ INDENT  INDENT  INDENT  INDENT  INDENT  KEY_BEGIN "name" KEY_END = "Node3"
+ INDENT  INDENT  INDENT  INDENT TABLE_END
+ INDENT  INDENT  INDENT ARRAY_END SEP 
+ INDENT  INDENT  INDENT  KEY_BEGIN "root" KEY_END = <table>
+ INDENT  INDENT TABLE_END SEP 
+ INDENT  INDENT  KEY_BEGIN "root" KEY_END = <table>
+ INDENT TABLE_END
+TABLE_END
+

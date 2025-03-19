@@ -1,0 +1,405 @@
+## Breadth First Traversal
+
+While that last output is undoubtedly valid, it fails the readability test.
+
+That `c2 = <c1.next>` is perfectly correct, but you have to go back and find the definition of `c1` to understand what `c1.next` actually is.
+It would be much better to see the definition of `c2` right there, not nested inside `c1`.
+We are after something that looks like this:
+```txt
+{
+ c1 =
+ {
+ first = Minnie,
+ last = Mouse,
+ next = <c2>
+ },
+ c2 =
+ {
+ first = Mickey,
+ last = Mouse,
+ prev = <c1>
+ },
+ home = <table>
+}
+```
+
+::: {.border .mb-3 .pt-3 .shadow .border-2 .border-primary .rounded .bg-light .text-center .fst-italic .fs-4}
+We would like to see the full definition of tables at the shallowest possible depth.
+:::
+
+The root problem is that we are traversing tables *depth-first*.
+
+We process all the elements in `c1` before getting to `c2`.
+So when we see `c1.next`, we print the full definition of what `c2` really is.
+Then, later, when we get to `c2`, we see that we have already processed it and output it as a reference to `<c1.next>`.
+That is ass-backwards and `c1.next` should be the reference to `<c2>`, and the definition of `c2` should be deferred to later.
+
+CAUTION: All the table-to-string implementations that are available on the web seem to have this problem,
+The depth-first traversal is a natural choice, but it doesn't provide the most readable output.
+
+We need to change the table traversal to be *breadth-first*.
+Then, we process the elements of `tbl` in the order they appear at the top level.
+If we encounter a sub-table, we will defer turning it to a string until after processing all the top-level elements.
+
+To demonstrate, let's see how breadth first traversal works for the simpler `metadata` method:
+```lua
+local function metadata(tbl, md)
+    md = md or {}
+    md[tbl] = {}
+    local size, array, subs = 0, true, 0
+    local children = {}                                             -- <1>
+    for _, v in pairs(tbl) do
+        size = size + 1
+        if array and tbl[size] == nil then array = false end
+        if type(v) == 'table' then
+            subs = subs + 1
+            if not md[v] then table.insert(children, v) end         -- <2>
+        end
+    end
+    md[tbl].size, md[tbl].array, md[tbl].subs = size, array, subs
+
+    for _, child in ipairs(children) do metadata(child, md) end     -- <3>
+    return md
+end
+```
+1. We keep a list of the sub-tables we encounter.
+2. If we encounter a sub-table, we add it to the list of children and defer immediate processing.
+3. After processing all the top-level elements, we *then* process the children.
+
+Changing the processing order in `metadata` doesn't change the output.
+`print(pretty(metadata(stars)))` still gives:
+```txt
+<table> = {
+ c1 = {
+ first = "Mickey",
+ last = "Mouse",
+ next = {
+ first = "Minnie",
+ last = "Mouse",
+ prev = <c1>
+ }
+ },
+ c2 = <c1.next>,
+ home = <table>
+}
+```
+We need to apply similar changes to the more complex `table_string` function:
+```lua
+function table_string(root_tbl, opts)
+    ...
+    local function process(tbl, path)
+        ...
+        local children = {}                                                                 -- <1>
+        ...
+        for k, v in iter(tbl) do
+            ...
+            if type(v) == 'table' then
+                if md[v].path then                                                          -- <2>
+                    v_string = pb .. md[v].path .. pe
+                    if v == root then root_ref = true end
+                else
+                    local v_path = path_prefix .. tostring(k)
+                    v_string = simple_string(v)                                             -- <3>
+                    md[v].path = v_path                                                     -- <4>
+                    children[v] = v_path                                                    -- <5>
+                    if delims == false and show_keys then v_string = nl .. v_string end
+                end
+            else
+                v_string = v_string .. simple_string(v)
+            end
+            content = content .. indent .. k_string .. v_string                             -- <6>
+            if i < size then content = content .. sep end
+        end
+        local retval = tb .. content .. te
+
+        for child_table, child_path in pairs(children) do                                   -- <7>
+            local child_string = process(child_table, child_path)                           -- <8>
+            child_string = indent_string(child_string, opts.indent, delims)                 -- <9>
+            retval = retval:gsub(simple_string(child_table), child_string)                  -- <10>
+        end
+        return retval
+    end
+
+    local retval = process(root_tbl, opts.path_root)
+    if root_ref then retval = pb .. opts.path_root .. pe .. ' = ' .. retval end
+    return retval
+end
+```
+
+With that change, `print(pretty(stars))` now gives:
+```txt
+<table> = {
+ c1 = {
+ first = "Mickey",
+ last = "Mouse",
+ next = <c2>
+ },
+ c2 = {
+ first = "Minnie",
+ last = "Mouse",
+ prev = <c1>
+ },
+ home = <table>
+}
+```
+
+### Arrays
+
+That last table is very readable.
+Every shared reference like `c1.next = <c2>` has an easily identifiable right-hand side value, the value associated with the *key* `c2` in this case.
+
+However, we have gone to some lengths to suppress showing explicit keys for Lua tables that happen to be arrays.
+If we have an array of arrays with shared references, the paths will lack clarity.
+
+For example, perhaps you are coding a Cludeo-type murder mystery game set in a big house with many rooms stored as an array.
+Each room might have a potential murder weapon in it:
+```lua
+local rooms = {
+ { name = "Library", weapon = "Lead Pipe" },
+ { name = "Kitchen", weapon = "Knife"     },
+ { name = "Lounge",  weapon = "Poison"    },
+ { name = "Bedroom", weapon = "Garrotte"  }
+}
+```
+The user will move from room to room in a fashion that might be randomly generated or set by the game's storyline.
+To keep it simple, we add `next` and `prev` fields to each room as follows:
+```lua
+rooms[1].next, rooms[2].next, rooms[3].next, rooms[4].next = rooms[2], rooms[3], rooms[4], rooms[1]
+rooms[1].prev, rooms[2].prev, rooms[3].prev, rooms[4].prev = rooms[4], rooms[1], rooms[2], rooms[3]
+```
+
+Now if we `print(pretty(rooms))` we get:
+```txt
+[
+ {
+ name = "Library",
+ next = <2>,
+ prev = <4>,
+ weapon = "Lead Pipe"
+ },
+ {
+ name = "Kitchen",
+ next = <3>,
+ prev = <1>,
+ weapon = "Knife"
+ },
+ {
+ name = "Lounge",
+ next = <4>,
+ prev = <2>,
+ weapon = "Poison"
+ },
+ {
+ name = "Bedroom",
+ next = <1>,
+ prev = <3>,
+ weapon = "Garrotte"
+ }
+]
+```
+`rooms` is an array printed without showing the indices.
+The problem is that path references like `next = <1>` don't make much sense.
+
+::: {.border .mb-3 .pt-3 .shadow .border-2 .border-primary .rounded .bg-light .text-center .fst-italic .fs-4}
+If the value associated with an *index* is shared, we want to see that index explicitly.
+:::
+
+The current implementation makes this difficult.
+The main loop in `table_string` looks like this:
+```lua
+    ...
+        for k, v in iter(tbl) do
+            i = i + 1
+            local k_string = show_keys and kb .. tostring(k) .. ke or ''
+            local v_string = ''
+            if type(v) == 'table' then
+
+            local k_string = show_keys and kb .. tostring(k) .. ke or ''
+    ...
+```
+We are creating the key string `k_string` before we know whether the associate value `v` is a table, let alone a *shared* table.
+We also put out the key-value pair at one depth, but any shared reference may be at a different depth.
+
+The solution is two-fold.
+First, add a new metadata field, `refs`, for each table and sub-table.
+`md[t].refs` will be the number of references seen for the table `t`.
+If `md[t].refs` is greater than `1`, then `t` is a shared table.
+
+We can compute the reference count field using the `metadata` method.
+We also switch the style of the function to having an inner hidden `process` closure that does all the work.
+Tables are still getting traversed depth-first.
+```lua
+local function metadata(root_tbl)
+    local md = {}                                                       -- <1>
+    md[root_tbl] = { refs = 1 }                                         -- <2>
+
+    local function process(tbl)                                         -- <3>
+        local size, array, subs  = 0, true, 0
+        local children = {}
+        for _, v in pairs(tbl) do
+            size = size + 1
+            if array and tbl[size] == nil then array = false end
+            if type(v) == 'table' then
+                subs = subs + 1
+                if md[v] then
+                    md[v].refs = md[v].refs + 1                         -- <4>
+                else
+                    table.insert(children, v)                           -- <5>
+                    md[v] = { refs = 1 }                                -- <6>
+                end
+            end
+        end
+        md[tbl].size, md[tbl].array, md[tbl].subs = size, array, subs
+        for _, child in ipairs(children) do process(child) end          -- <7>
+    end
+
+    process(root_tbl)                                                   -- <8>
+    return md
+end
+```
+1. We set up the metadata table that will be accessible inside the `process` closure.
+2. We immediately add an entry for the root table as it might be referenced by its immediate children
+3. `process` is the recursive function that does all the heavy lifting.
+4. If we've seen `v` before, we increment its reference count.
+5. Otherwise we add `v` to the list of sub-tables to process later.
+6. We add a metadata entry for `v` here in case it is referenced by an immediate sibling.
+7. Go ahead and process the granchildren etc.
+8. We kick things off by processing the root table.
+
+Of course, we must tweak our `table_string` method:
+```lua
+function table_string(root_tbl, opts)
+    ...
+    local function process(tbl, path)
+        ...
+        for k, v in iter(tbl) do
+            i = i + 1
+            local show_key = show_keys                                      -- <1>
+            local v_string = ''
+            if type(v) == 'table' then
+                if md[v].path then
+                    v_string = pb .. md[v].path .. pe
+                    if v == root then root_ref = true end
+                else
+                    if md[v].refs > 1 then show_key = true end              -- <2>
+                    local v_path = path_prefix .. tostring(k)
+                    v_string = simple_string(v)
+                    md[v].path = v_path
+                    children[v] = v_path
+                    if delims == false and show_key then v_string = nl .. v_string end
+                end
+            else
+                v_string = v_string .. simple_string(v)
+            end
+            local k_string = show_key and kb .. tostring(k) .. ke or ''     -- <3>
+            content = content .. indent .. k_string .. v_string
+            if i < size then content = content .. sep end
+        end
+        ...
+    end
+    ...
+end
+```
+1. By default we show *this* key based on the value of `show_keys`.
+2. If `v` is new and has a reference count greater than `1`, we will show the corresponding key whether or not `show_keys` is `false`. We must do that so that any path references to `v` make sense.
+3. Now that we know the state of play, we can finally set the string for this key.
+
+With this change, `print(pretty(rooms))` gives:
+```txt
+[
+ 1 = {
+ name = "Library",
+ next = <2>,             # <1>
+ prev = <4>,
+ weapon = "Lead Pipe"
+ },
+ 2 = {
+ name = "Kitchen",
+ next = <3>,
+ prev = <1>,
+ weapon = "Knife"
+ },
+ 3 = {
+ name = "Lounge",
+ next = <4>,
+ prev = <2>,
+ weapon = "Poison"
+ },
+ 4 = {
+ name = "Bedroom",
+ next = <1>,
+ prev = <3>,
+ weapon = "Garrotte"
+ }
+]
+```
+1. The path reference `<2>` now makes perfect sense.
+
+Here's what we get for `print(alt(rooms))`:
+```txt
+1:
+ name: "Library",
+ next: <2>,
+ prev: <4>,
+ weapon: "Lead Pipe",
+2:
+ name: "Kitchen",
+ next: <3>,
+ prev: <1>,
+ weapon: "Knife",
+3:
+ name: "Lounge",
+ next: <4>,
+ prev: <2>,
+ weapon: "Poison",
+4:
+ name: "Bedroom",
+ next: <1>,
+ prev: <3>,
+ weapon: "Garrotte"
+```
+This output is also very readable.
+
+### One Small Tweak
+
+Our current definition of a "simple" table is one that has no sub-tables.
+But what is a sub-table?
+
+We can very slightly alter our metadata function to not count path references as distinct sub-tables.
+
+```lua
+local function metadata(root_tbl)
+    ...
+    local function process(tbl)
+        ...
+        for _, v in pairs(tbl) do
+            ...
+            if type(v) == 'table' then
+                -- subs = subs + 1                      -- <1>
+                if md[v] then
+                    md[v].refs = md[v].refs + 1
+                else
+                    subs = subs + 1                     -- <2>
+                    table.insert(children, v)
+                    md[v] = { refs = 1 }
+                end
+            end
+        end
+        ...
+    end
+end
+```
+1. We move this line
+2. to here.
+
+With that change only "real" sub-tables count towards the `sub` total.
+
+`print(pretty(rooms))` now gives the more compact but still readable:
+```txt
+[
+    1 = { name = "Library", next = <2>, prev = <4>, weapon = "Lead Pipe" },
+    2 = { name = "Kitchen", next = <3>, prev = <1>, weapon = "Knife" },
+    3 = { name = "Lounge", next = <4>, prev = <2>, weapon = "Poison" },
+    4 = { name = "Bedroom", next = <1>, prev = <3>, weapon = "Garrotte" }
+]
+```
