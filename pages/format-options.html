@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Formatting Options – Scribe</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../pages/standard-formats.html" rel="next">
+<link href="../pages/stringification.html" rel="prev">
+<link href="../assets/images/logo.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-3dab89b00e5da3c21c7fdf7320ab4863.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-e8ca782b0f038343a77a11b3e6da11e9.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-1c72929d01b0088021efc93cecacfdad.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-fd7f26691d08b4217965b71eb792887a.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/quarto-contrib/admonitions-1.0.0/admonitions.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+<meta property="og:title" content="Formatting Options – Scribe">
+<meta property="og:description" content="">
+<meta property="og:image" content="https://nessan.github.io/scribe/pages/assets/images/logo.png">
+<meta property="og:site_name" content="Scribe">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../assets/images/logo.png" alt="The Scribe Logo" class="navbar-logo">
+    </a>
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Scribe</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="../index.html" aria-current="page"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/stringification.html"> 
+<span class="menu-text">Stringification</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/format-options.html"> 
+<span class="menu-text">Format Options</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/standard-formats.html"> 
+<span class="menu-text">Standard Formats</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/custom-options.html"> 
+<span class="menu-text">Custom Formats</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/formatted-output.html"> 
+<span class="menu-text">Formatted Output</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../pages/tutorial/index.html"> 
+<span class="menu-text">Tutorial</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-more" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">More</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-more">    
+        <li>
+    <a class="dropdown-item" href="https://github.com/nessan/scribe"><i class="bi bi-github" role="img">
+</i> 
+ <span class="dropdown-text">Project Repo</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="https://github.com/nessan/scribe/issues"><i class="bi bi-bug" role="img">
+</i> 
+ <span class="dropdown-text">Report a Bug</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="mailto:nzznfitz+gh@icloud.com"><i class="bi bi-chat-right-text" role="img">
+</i> 
+ <span class="dropdown-text">Ask a Question</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+    <a href="https://github.com/nessan/scribe" title="GitHub repo" class="quarto-navigation-tool px-1" aria-label="GitHub repo"><i class="bi bi-github"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <a class="flex-grow-1 no-decor" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+          <h1 class="quarto-secondary-nav-title">Formatting Options</h1>
+        </a>     
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pages/stringification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Stringification</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pages/format-options.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Format Options</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pages/standard-formats.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Standard Formats</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pages/custom-options.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Custom Formats</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pages/formatted-output.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Formatted Output</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pages/tutorial/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Turning the Tables …</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#formatting-parameters" id="toc-formatting-parameters" class="nav-link" data-scroll-target="#formatting-parameters">Formatting Parameters</a></li>
+  <li><a href="#parameter-definitions" id="toc-parameter-definitions" class="nav-link" data-scroll-target="#parameter-definitions">Parameter Definitions</a></li>
+  <li><a href="#simple-tables" id="toc-simple-tables" class="nav-link" data-scroll-target="#simple-tables">Simple Tables</a></li>
+  <li><a href="#ordered-iteration" id="toc-ordered-iteration" class="nav-link" data-scroll-target="#ordered-iteration">Ordered Iteration</a></li>
+  <li><a href="#path-references" id="toc-path-references" class="nav-link" data-scroll-target="#path-references">Path References</a></li>
+  <li><a href="#the-default-format" id="toc-the-default-format" class="nav-link" data-scroll-target="#the-default-format">The Default Format</a></li>
+  <li><a href="#see-also" id="toc-see-also" class="nav-link" data-scroll-target="#see-also">See Also</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/nessan/scribe/edit/main/docs/pages/format-options.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/nessan/scribe/issues/new/choose" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Formatting Options</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>If you have loaded the <code>scribe</code> module as:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">scribe</span> <span class="op">=</span> <span class="fu">require</span> `scribe<span class="st">'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>You can call the most general method for converting a Lua object <code>obj</code> to a string:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">obj_string</span> <span class="op">=</span> scribe<span class="op">(</span><span class="va">obj</span><span class="op">,</span> <span class="va">opts</span><span class="op">,</span> <span class="va">overrides</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="admonition tip">
+    <table><tbody><tr>
+    <td class="icon"> <i class="fa icon-tip" title="Tip"></i></td>
+    <td class="content">
+    
+Scribe has <a href="../pages/standard-formats.html">pre-canned standard options</a> that cover most use cases. Those methods should usually be your first port of call.
+</td></tr></tbody></table></div>
+<p>The <code>opts</code> and <code>overrides</code> arguments are both optional.</p>
+<p>If <code>opts</code> is missing, the method will use the formatting option table <code>scribe.options.default</code>. Out of the box, the default is <code>scribe.options.inline</code>. You can change that if you wish. By default, <code>scribe(obj)</code> returns the string from <a href="../pages/stringification.html"><code>scribe.inline</code></a>.</p>
+<p>The <code>overrides</code> argument is an optional table of tweaks you would like to make to <code>opts</code>. By default, this is <code>nil</code>. See the <a href="../pages/custom-options.html">customisation</a> page for more details.</p>
+</section>
+<section id="formatting-parameters" class="level2">
+<h2 class="anchored" data-anchor-id="formatting-parameters">Formatting Parameters</h2>
+<p>If you do use <code>scribe</code> with the optional second <code>opts</code> argument, it should be a table with the following keys and values:</p>
+<div class="table-responsive">
+<table class="table-bordered table-striped table-hover caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 10%">
+<col style="width: 70%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>The Key String</th>
+<th style="text-align: center;">Value Type</th>
+<th>Brief Description of the Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>opts.table_begin</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The left delimiter for general tables, e.g., <code>{</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.table_end</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The right delimiter for general tables, e.g., <code>}</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.array_begin</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The left delimiter for <em>array</em> tables, e.g., <code>[</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.array_end</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The right delimiter for <em>array</em> tables, e.g., <code>]</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.inline_spacer</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>For example, if this is <code>' '</code>, then Scribe adds an extra space between inline table/array delimiters and their contents: <br> You get <code>{ ... }</code> instead of <code>{...}</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.key_begin</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The left delimiter for table keys, e.g., <code>''</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.key_end</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The right delimiter for table keys with assignment, e.g., <code>=</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.show_indices</code></td>
+<td style="text-align: center;"><code>boolean</code></td>
+<td>Controls visibility of indices in arrays.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.sep</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The separator that marks the end of a key-value pair, e.g.&nbsp;<code>,</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.indent</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>Indentation for table elements per nesting level, e.g.&nbsp;<code>"  "</code>. <br> If <code>indent</code> is set to <code>""</code>, the output will be a one-line string.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.inline_size</code></td>
+<td style="text-align: center;"><code>number</code></td>
+<td>We put <em>simple</em> sub-tables &amp; sub-arrays on one line no matter what <code>indent</code> is set to as long as their size is less than <code>inline_size</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.comparator</code></td>
+<td style="text-align: center;"><code>function</code></td>
+<td>The comparator function used to sort table keys. <br> We use a default comparator if <code>comparator</code> isn’t set. <br> To <em>not</em> use ordered output, explicitly set this to <code>false</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.path_root</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>A top-level name to anchor path references to shared tables. <br> Defaults to <code>table</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.path_sep</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The separator to use in paths for shared tables <br> Defaults to <code>.</code> so paths look like <code>&lt;foo.bar&gt;</code> or perhaps <code>&lt;table&gt;</code></td>
+</tr>
+<tr class="odd">
+<td><code>opts.path_begin</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The left delimiter for path references. Defaults to <code>&lt;</code>.</td>
+</tr>
+<tr class="even">
+<td><code>opts.path_end</code></td>
+<td style="text-align: center;"><code>string</code></td>
+<td>The right delimiter for path references. Defaults to <code>&gt;</code>.</td>
+</tr>
+<tr class="odd">
+<td><code>opts.use_metatable</code></td>
+<td style="text-align: center;"><code>boolean</code></td>
+<td>Controls whether we use any custom <code>__tostring()</code> metamethod if present.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="parameter-definitions" class="level2">
+<h2 class="anchored" data-anchor-id="parameter-definitions">Parameter Definitions</h2>
+<p>Most of these format fields do obvious things, like setting a table’s left and right delimiters.</p>
+<p>Others include:</p>
+<ol type="1">
+<li>If the <code>indent</code> option is the empty string <code>""</code>, tables will always be output on one line.</li>
+<li>Even if we use indentation, any <em>simple</em> enough tables or arrays are inlined. <br> See the <a href="#simple-tables">Simple Tables</a> section.</li>
+<li>The output strings can distinguish between general tables and arrays. <br>For example, JSON uses <code>[...]</code> to delimit arrays and <code>{...}</code> for general name-value tables.</li>
+<li>Arrays have implicit consecutive integer keys starting at one. <br> Generally, you don’t need to see those, but you can force them to be output.</li>
+<li>The <code>path_root</code> and <code>path_sep</code> variables only come into play when a table has shared references. The first time a table is seen, you get a full definition. <br> You get a reference like <code>&lt;foo.bar&gt;</code> afterwards.</li>
+<li>See the <a href="#ordered-iteration">Ordered Iteration</a> section for more details about the <code>comparator</code> field and how to output tables in a key-sorted order.</li>
+<li>See the <a href="#path-references">Path References</a> section for more details about the <code>path_*</code> fields.</li>
+<li>Setting <code>use_metatable</code> to <code>false</code> is helpful if you use this module to add a custom <code>__tostring</code> metamethod to a class. It stops infinite recursion.</li>
+</ol>
+<div class="admonition tip">
+    <table><tbody><tr>
+    <td class="icon"> <i class="fa icon-tip" title="Tip"></i></td>
+    <td class="content">
+    
+The values for <em>all</em> of the keys are used. However, you can just set the ones you want to customise. The <code>scribe</code> method will fill the rest with reasonable defaults.
+</td></tr></tbody></table></div>
+<p>Scribe has <a href="../pages/standard-formats.html">pre-canned standard options</a> that cover most use cases. You can always copy and tweak the fields in one of those to get the desired output style for tables.</p>
+</section>
+<section id="simple-tables" class="level2">
+<h2 class="anchored" data-anchor-id="simple-tables">Simple Tables</h2>
+<p>A table or array is <em>simple</em> if it has no nested sub-tables or sub-arrays.</p>
+<p>There is also an optional limit on the number of elements that can be present for a table to be considered “simple”.</p>
+<p>The <code>inline_size</code> field in the formatting options table controls this. If a table has no sub-tables, and if the number of elements in is less than <code>inline_size</code>, then the table is output on one line.</p>
+<p>The <code>pretty</code> formatting parameters sets <code>inline_size</code> to <code>math.huge</code>, so all simple tables are output on one line. The <code>classic</code> formatting parameters sets <code>inline_size</code> to <code>0</code>, so no inlining is ever done.</p>
+<p>More sophisticated limits might incorporate the number of characters it takes to describe a simple table.</p>
+</section>
+<section id="ordered-iteration" class="level2">
+<h2 class="anchored" data-anchor-id="ordered-iteration">Ordered Iteration</h2>
+<p>In Lua, the storage order for the elements in a general key-value table is undefined. For example, if you have a little snippet of code like:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">tbl</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">first</span> <span class="op">=</span> <span class="st">'Minnie'</span><span class="op">,</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">last</span> <span class="op">=</span> <span class="st">'Mouse'</span><span class="op">,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">email</span> <span class="op">=</span> <span class="st">'minnie@disney.com'</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="va">k</span><span class="op">,</span> <span class="va">v</span> <span class="kw">in</span> <span class="fu">pairs</span><span class="op">(</span><span class="va">tbl</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span><span class="op">(</span><span class="va">k</span><span class="op">,</span> <span class="st">"="</span><span class="op">,</span> <span class="va">v</span><span class="op">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Run it several times, and you will see that the output order is not fixed!</p>
+<p>On the first run, you might get:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>email   =   minnie@disney.com</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>first   =   Minnie</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>last    =   Mouse</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>On the next:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>last    =   Mouse</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>email   =   minnie@disney.com</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>first   =   Minnie</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>And so on.</p>
+<p>This is not the case for Lua arrays stored in the natural increasing index order.</p>
+<p>Seeing different outputs every time you print a table can be disconcerting, so <code>scribe</code> can fix the element output order for general key-value tables. This is controlled by the <code>comparator</code> field in the formatting options table.</p>
+<p>If that parameter is explicitly set to <code>false</code>, <code>scribe</code> will iterate through tables using the standard <code>pairs</code> method. The output order of the elements is then undefined and will vary from run to run.</p>
+<p>If the <code>comparator</code> field is left empty, then Scribe will iterate through tables in a predefined manner. The default sorting function orders the keys alphanumerically by type first and then value. The <code>number</code> type comes before the <code>string</code> type, so typically, the array part of any table appears first.</p>
+<p>You can also set the <code>comparator</code> value to a custom function <code>cmp(k1, k2)</code> that takes two keys <code>k1</code> and <code>k2</code> and returns <code>true</code> if you want <code>k1</code> to come before <code>k2</code> when you print the table.</p>
+<p>All the standard option sets set the <code>comparator</code> field to the default key comparison method. This means that for our Disney example, <code>print(scribe(tbl))</code> will <em>always</em> output:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>{ email = "minnie@disney.com", first = "Minnie", last = "Mouse" }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>You can see that the table appears with its keys sorted in increasing alphabetical order.</p>
+<p>You can change the order by passing a custom comparator function in the <code>overrides</code> argument:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span><span class="op">(</span>scribe<span class="op">(</span><span class="va">tbl</span><span class="op">,</span> <span class="op">{</span> <span class="va">comparator</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">a</span><span class="op">,</span><span class="va">b</span><span class="op">)</span> <span class="cf">return</span> <span class="va">a</span> <span class="op">&gt;</span> <span class="va">b</span> <span class="kw">end</span> <span class="op">}))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This will output the table with the keys sorted in decreasing alphabetical order.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>{ last = "Mouse", first = "Minnie", email = "minnie@disney.com" }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This works fine on a one-off basis. See the <a href="../pages/custom-options.html">customisation</a> page to set that as a new default.</p>
+</section>
+<section id="path-references" class="level2">
+<h2 class="anchored" data-anchor-id="path-references">Path References</h2>
+<p>If a table has shared references, Scribe will output the full definition of the table at the shallowest depth possible. After that, it will use a path string to reference the shared table.</p>
+<p>If the <code>path_root</code> field is <code>table</code>, then a reference to the table itself will be the path <code>&lt;table&gt;</code>.</p>
+<p>More commonly, you will get paths like <code>&lt;foo.bar&gt;</code>, which refers to the value found by following the key chain <code>foo.bar</code> from the root table, If the root table is <code>tbl</code>, then that path reference is to the value <code>tbl[foo][bar]</code>.</p>
+</section>
+<section id="the-default-format" class="level2">
+<h2 class="anchored" data-anchor-id="the-default-format">The Default Format</h2>
+<p>A default set of formatting options is used when you call <code>scribe(tbl)</code> without any second argument. Out of the box, this is <code>scribe.options.inline</code>, which means <code>scribe(tbl)</code> returns a one-line string representation of <code>tbl</code>.</p>
+<p>You can change that to, say, a multiline string for all tables by:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a> <span class="va">scribe</span><span class="op">.</span><span class="va">options</span><span class="op">.</span><span class="va">default</span> <span class="op">=</span> <span class="va">scribe</span><span class="op">.</span><span class="va">options</span><span class="op">.</span><span class="va">pretty</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>From then on, <code>scribe(tbl)</code> will be the same as <code>scribe.pretty</code>.</p>
+</section>
+<section id="see-also" class="level2">
+<h2 class="anchored" data-anchor-id="see-also">See Also</h2>
+<p><a href="../pages/standard-formats.html">Standard Options</a> <br> <a href="../pages/custom-options.html">Custom Options</a> <br> <a href="../pages/stringification.html">Object-to-String Conversions</a> <br> <a href="../pages/formatted-output.html">Formatted Output</a> <br> <a href="../pages/tutorial/index.html">Turning the Tables …</a></p>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = false;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/nessan\.github\.io\/scribe");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../pages/stringification.html" class="pagination-link" aria-label="Stringification">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Stringification</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../pages/standard-formats.html" class="pagination-link" aria-label="Standard Formats">
+        <span class="nav-page-text">Standard Formats</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>© 2025 Nessan ∙ Made with <a href="https://quarto.org">Quarto</a></p>
+</div>   
+    <div class="nav-footer-center">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/nessan/scribe">
+      <i class="bi bi-github" role="img" aria-label="GitHub Repo">
+</i> 
+    </a>
+  </li>  
+    <li class="nav-item compact">
+    <a class="nav-link" href="mailto:nzznfitz+gh@icloud.com">
+      <i class="bi bi-envelope" role="img" aria-label="EMail address">
+</i> 
+    </a>
+  </li>  
+</ul>
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/nessan/scribe/edit/main/docs/pages/format-options.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/nessan/scribe/issues/new/choose" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p><a href="https://opensource.org/license/mit">MIT Licensed</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
