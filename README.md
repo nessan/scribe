@@ -68,6 +68,12 @@ We could instead dump the table in a JSON format with the call `putln("%J", user
 
 The module has no dependencies. Copy the single `scribe.lua` file and start using it.
 
+Released versions will also be uploaded to the luarocks repository, so you should be able to install them using:
+
+```bash
+luarocks install scribe
+```
+
 ## Documentation
 
 Scribe is fully documented [here](https://nessan.github.io/scribe/).

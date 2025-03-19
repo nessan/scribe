@@ -49,6 +49,12 @@ It is also easy to tweak one of those standards to achieve a [custom](/pages/cus
 The module has no dependencies. <br>
 Copy the single `scribe.lua` file into a project and start to use it.
 
+Released versions will also be uploaded to the luarocks repository, so you should be able to install them using:
+
+```bash
+luarocks install scribe
+```
+
 ## Conversion Methods
 
 If you have imported the module as
