@@ -27,3 +27,6 @@ node_modules/
 /lua_modules
 /.luarocks
 /.luarc.json
+
+# The LuaRocks archive is not needed in the repository.
+*.rock
