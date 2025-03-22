@@ -79,7 +79,7 @@ luarocks install scribe
 Scribe is fully documented [here](https://nessan.github.io/scribe/).
 We built the documentation site using [Quarto](https://quarto.org).
 
-The documentation includes a [lengthy article](https://nessan.github.io/scribe/tutorial.html) describing how we built the module.
+The documentation includes a [lengthy article](https://nessan.github.io/scribe/pages/tutorial/) describing how we built the module.
 That tutorial might be a decent Lua 201 tutorial for those new to the language.
 
 ## Contact
