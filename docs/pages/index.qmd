@@ -75,6 +75,7 @@ Method                 | Brief Description
 {scribe.json}          | Converts tables to a multiline JSON string format.
 {scribe.inline_json}   | Converts tables to a compact one-line JSON string format.
 {scribe.debug}         | Output tables as an abstract syntax tree. <br> Useful if you design a `scribe` option table.
+{scribe.clone}         | Returns a shallow copy of a table. <br> Can be used to copy a standard option table for customisation.
 : {.bordered .striped .ver .responsive tbl-colwidths="[30,70]"}
 
 NOTE: `scribe(...)` is a succinct synonym for `scribe.scribe(...)`. <br>

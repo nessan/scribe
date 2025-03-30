@@ -15,6 +15,7 @@ local obj_string = scribe(obj, opts, overrides)
 
 TIP: Scribe has [pre-canned standard options](/pages/standard-formats.qmd) that cover most use cases.
 Those methods should usually be your first port of call.
+You can also use {scribe.clone} to copy one of those standard options tables and tweak it to get the desired output style for your use case.
 
 The `opts` and `overrides` arguments are both optional.
 

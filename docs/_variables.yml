@@ -24,6 +24,7 @@ lua:
 scribe:
   alt: "[`scribe.alt`](/pages/stringification.qmd)"
   classic: "[`scribe.classic`](/pages/stringification.qmd)"
+  clone: "[`scribe.clone`](/pages/custom-options.qmd)"
   debug: "[`scribe.debug`](/pages/stringification.qmd)"
   eput: "[`scribe.eput`](/pages/formatted-output.qmd)"
   eputln: "[`scribe.eputln`](/pages/formatted-output.qmd)"

@@ -353,14 +353,6 @@ local function table_string(root_tbl, opts)
     return retval
 end
 
---- Private function: Returns a shallow clone of a table `tbl`.
---- @param tbl table The table to clone -- used to copy tables of formatting options.
-local function clone(tbl)
-    local retval = {}
-    for k, v in pairs(tbl) do retval[k] = v end
-    return retval
-end
-
 --- Private function: Fills the formatting options table `opts` from the *complete* formatting table `from`.
 --- @param opts  table The potentially incomplete table of formatting options.
 --- @params from table A complete table formatting options. Missing fields in `opts` get filled from here.
@@ -375,6 +367,15 @@ end
 --- The publicly exported `scribe` function and friends
 -----------------------------------------------------------------------------------------------------------------------
 local M = {}
+
+--- Returns a shallow clone of the argument. This is useful for copying tables of formatting options.
+--- @param tbl table The object to clone which we expect to be a table.
+function M.clone(tbl)
+    if type(tbl) ~= 'table' then return tbl end
+    local retval = {}
+    for k, v in pairs(tbl) do retval[k] = v end
+    return retval
+end
 
 -- We store 'standard' tables of formatting options inside this module under the parent key `options`.
 M.options = {}
@@ -402,19 +403,19 @@ M.options.pretty = {
 }
 
 --- Formatting options used to turn a table into a one-line string (see `M.inline`).
-M.options.inline = clone(M.options.pretty)
+M.options.inline = M.clone(M.options.pretty)
 M.options.inline.indent = ''
 
 --- Formatting options used to turn a table into a "classic" multiline string (see `M.classic`).
 --- All tables are delimited using curly braces, and all elements are on separate lines.
-M.options.classic = clone(M.options.pretty)
+M.options.classic = M.clone(M.options.pretty)
 M.options.classic.array_begin = '{'
 M.options.classic.array_end = '}'
 M.options.classic.inline_size = 0
 
 --- Formatting options used to turn a table into an "alternate" multiline string (see `M.alt`).
 --- In this format, table structure is shown by indentation alone and no table delimiters are used.
-M.options.alt = clone(M.options.pretty)
+M.options.alt = M.clone(M.options.pretty)
 M.options.alt.table_begin = ''
 M.options.alt.table_end = ''
 M.options.alt.array_begin = ''
@@ -423,13 +424,13 @@ M.options.alt.key_end = ': '
 M.options.alt.inline_size = 0
 
 --- Formatting options used to turn a table into a "JSON" multiline string (see `M.json`).
-M.options.json = clone(M.options.pretty)
+M.options.json = M.clone(M.options.pretty)
 M.options.json.key_begin = '"'
 M.options.json.key_end = '": '
 M.options.json.inline_size = 0
 
 --- Formatting options used to turn a table into a compact one-line JSON-like string (see `M.inline_json`).
-M.options.inline_json = clone(M.options.json)
+M.options.inline_json = M.clone(M.options.json)
 M.options.inline_json.indent = ''
 M.options.inline_json.key_end = '":'
 M.options.inline_json.inline_spacer = ''
@@ -437,7 +438,7 @@ M.options.inline_json.inline_spacer = ''
 --- Formatting options used to turn a table into a multiline "Abstract Syntax Tree" string (see `M.debug`).
 --- This format exposes how our main `table_string` function sees the structure ot a table.
 --- Can be useful if you are developing your own table of custom formatting options.
-M.options.debug = clone(M.options.pretty)
+M.options.debug = M.clone(M.options.pretty)
 M.options.debug.indent = ' INDENT '
 M.options.debug.table_begin = 'TABLE_BEGIN'
 M.options.debug.table_end = 'TABLE_END'

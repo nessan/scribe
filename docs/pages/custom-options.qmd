@@ -95,6 +95,26 @@ to get:
 ```
 1. Here `inf` refers to infinity and corresponds to the Lua value `math.huge`.
 
+## Cloning Options
+
+You can also clone an options table to create a new one with the same settings:
+```lua
+local my_options = scribe.clone(scribe.options.inline)
+```
+
+This is useful if you want to create a new options table with the same settings as an existing one, but with some modifications.
+
+One application of this is create a `__tostring` metamethod for a class `MyClass` that defers most of the work to `scribe.inline`:
+```lua
+local my_inline_options = scribe.clone(scribe.options.inline)
+my_inline_options.use_metatable = false
+
+function MyClass:__tostring()
+    return scribe.inline(self, my_inline_options)
+end
+```
+This will create a new options table with exactly the same settings as `scribe.options.inline`, but with `use_metatable` set to `false` which prevents infinite recursion when printing objects of class `MyClass`.
+
 ## See Also
 
 [Object-to-String Conversions](/pages/stringification.qmd)   <br>

@@ -20,6 +20,13 @@ Option Table                                             | Corresponding Method
 
 The detailed settings for each of the option tables are documented below.
 
+You can also use the `scribe.clone` method to copy one of these standard options tables and tweak it to get the desired output style for your use case.
+```lua
+local my_pretty_options = scribe.clone(scribe.options.pretty)
+my_pretty_options.indent = "  "     -- <1>
+```
+1. This will change the indentation to two spaces instead of four.
+
 ## Example Setup
 
 We will use some sample tables below.
