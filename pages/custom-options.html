@@ -261,6 +261,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
+  <li><a href="#cloning-options" id="toc-cloning-options" class="nav-link" data-scroll-target="#cloning-options">Cloning Options</a></li>
   <li><a href="#see-also" id="toc-see-also" class="nav-link" data-scroll-target="#see-also">See Also</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/nessan/scribe/edit/main/docs/pages/custom-options.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/nessan/scribe/issues/new/choose" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -361,6 +362,20 @@ print(scribe.inline(tbl, overrides))</code></pre>
 <span data-code-cell="annotated-cell-7" data-code-lines="7" data-code-annotation="1">Here <code>inf</code> refers to infinity and corresponds to the Lua value <code>math.huge</code>.</span>
 </dd>
 </dl>
+</section>
+<section id="cloning-options" class="level2">
+<h2 class="anchored" data-anchor-id="cloning-options">Cloning Options</h2>
+<p>You can also clone an options table to create a new one with the same settings:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">my_options</span> <span class="op">=</span> <span class="va">scribe</span><span class="op">.</span>clone<span class="op">(</span><span class="va">scribe</span><span class="op">.</span><span class="va">options</span><span class="op">.</span><span class="va">inline</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This is useful if you want to create a new options table with the same settings as an existing one, but with some modifications.</p>
+<p>One application of this is create a <code>__tostring</code> metamethod for a class <code>MyClass</code> that defers most of the work to <code>scribe.inline</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">my_inline_options</span> <span class="op">=</span> <span class="va">scribe</span><span class="op">.</span>clone<span class="op">(</span><span class="va">scribe</span><span class="op">.</span><span class="va">options</span><span class="op">.</span><span class="va">inline</span><span class="op">)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="va">my_inline_options</span><span class="op">.</span><span class="va">use_metatable</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">MyClass</span><span class="op">:</span><span class="bu">__tostring</span><span class="op">()</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">scribe</span><span class="op">.</span>inline<span class="op">(</span><span class="va">self</span><span class="op">,</span> <span class="va">my_inline_options</span><span class="op">)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This will create a new options table with exactly the same settings as <code>scribe.options.inline</code>, but with <code>use_metatable</code> set to <code>false</code> which prevents infinite recursion when printing objects of class <code>MyClass</code>.</p>
 </section>
 <section id="see-also" class="level2">
 <h2 class="anchored" data-anchor-id="see-also">See Also</h2>
