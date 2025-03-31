@@ -278,6 +278,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#metamethods" id="toc-metamethods" class="nav-link" data-scroll-target="#metamethods">Metamethods</a></li>
   <li><a href="#the-scribe-module" id="toc-the-scribe-module" class="nav-link" data-scroll-target="#the-scribe-module">The <code>scribe</code> Module</a></li>
   <li><a href="#formatted-output" id="toc-formatted-output" class="nav-link" data-scroll-target="#formatted-output">Formatted Output</a></li>
+  <li><a href="#a-subtle-bug" id="toc-a-subtle-bug" class="nav-link" data-scroll-target="#a-subtle-bug">A Subtle Bug!</a></li>
   </ul>
 <div class="toc-actions"><ul class="collapse"><li><a href="https://github.com/nessan/scribe/edit/main/docs/pages/tutorial/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/nessan/scribe/issues/new/choose" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -4211,7 +4212,7 @@ In Lua, the <code>local</code> keyword is used to declare variables and function
 <p>The first four entries are the system directories where Lua looks for modules. Those were set when Lua was installed. The <code>./?.lua</code> entry tells Lua to also look for modules in the “current” directory.</p>
 <p>By the way, the <code>?</code> is a wildcard that Lua replaces with the file name you are searching for.</p>
 <p>With this setup you drop the <code>scribe.lua</code> in the same directory as your main Lua file and you can <code>require</code> it. Everything will work fine.</p>
-<p>However, these days you are quite likely to run Lua from an IDE or perhaps via a plugin in another application. For example, I sometimes run Lua from <a href="https://studio.zerobrane.com">ZeroBrane Studio</a> which is a free lightweight IDE for Lua with a a full featured debugger (it’s cross-platform and highly recommended). Other times I run Lua from <a href="https://code.visualstudio.com">Visual Studio Code</a> with the <a href="https://marketplace.visualstudio.com/items?itemName=sumneko.lua">Lua for Visual Studio Code</a> extension.</p>
+<p>However, these days you are quite likely to run Lua from an IDE or perhaps via a plugin in another application. For example, I sometimes run Lua from <a href="https://studio.zerobrane.com">ZeroBrane Studio</a> which is a free lightweight IDE for Lua with a a full featured debugger (it’s cross-platform and highly recommended). Other times I run Lua from <a href="https://code.visualstudio.com">VSCode</a> with the <a href="https://marketplace.visualstudio.com/items?itemName=sumneko.lua">Lua for Visual Studio Code</a> extension.</p>
 <p>In both these cases, the current directory is not the directory where your Lua files are! Instead, it is the directory where the IDE or plugin is installed.</p>
 <p>When you run Lua from these environments, you will get an error when you try to <code>require</code> a module in the same directory as your main Lua file. The error will be something like:</p>
 <div class="sourceCode" id="annotated-cell-217"><pre class="sourceCode txt code-annotation-code code-with-copy code-annotated"><code class="sourceCode default"><span id="annotated-cell-217-1"><a href="#annotated-cell-217-1" aria-hidden="true" tabindex="-1"></a>module 'scribe' not found:</span>
@@ -4420,6 +4421,305 @@ In Lua, the <code>local</code> keyword is used to declare variables and function
 <span id="cb118-2"><a href="#cb118-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">io.stdout</span><span class="op">:</span><span class="fu">write</span><span class="op">(</span><span class="cn">M</span><span class="op">.</span>format<span class="op">(</span><span class="va">template</span><span class="op">,</span> <span class="op">...),</span> <span class="st">'</span><span class="sc">\n</span><span class="st">'</span><span class="op">)</span></span>
 <span id="cb118-3"><a href="#cb118-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Corresponding <code>eput</code>, <code>eputln</code>, <code>fput</code>, and <code>fputln</code> functions write to the standard error stream and to files.</p>
+</section>
+</section>
+<section id="a-subtle-bug" class="level2">
+<h2 class="anchored" data-anchor-id="a-subtle-bug">A Subtle Bug!</h2>
+<section id="introduction-2" class="level3">
+<h3 class="anchored" data-anchor-id="introduction-2">Introduction</h3>
+<p><code>scribe</code> has existed for a while now.</p>
+<p>The obvious use case is to print tables to the console as a simple form of debugging. It is an overkill for that purpose unless you deal with tables containing cycles. But <code>scribe</code> is a small, stand-alone module that is very simple to use, so why not?</p>
+<p>We use the module to add custom <code>__tostring</code> metamethods to various classes in a larger Lua codebase. Those methods use the ability to customise the formatting options and exercise the full range of features.</p>
+<p><code>scribe</code> is entirely self-contained and does not require any external dependencies. This makes it a great candidate for a little tutorial project like this one.</p>
+<p>It also makes it a playground for exploring the capabilities of LLMs.</p>
+</section>
+<section id="pairs-programming-with-ai" class="level3">
+<h3 class="anchored" data-anchor-id="pairs-programming-with-ai">Pairs Programming with AI</h3>
+<p>We recently have looked into the capabilities of <a href="https://www.cursor.com">Cursor</a> and <a href="https://github.com/nessan/windsurf">Windsurf</a> to see how well they can help us write code.</p>
+<p>They both are forks of the ubiquitous <a href="https://code.visualstudio.com">VSCode</a> editor, designed to allow the LLM’s broader access to the codebase. Under the covers, they use the same LLMs that power <a href="https://copilot.github.com">Copilot</a>, but they are a step up from the current iteration of that technology.</p>
+<p>We prompted Cursor to write some tests for <code>scribe</code> using the <a href="https://olivinelabs.github.io/busted/"><code>Busted</code></a> testing framework.</p>
+<p>Without going into too much detail, the tests are many little functions that call <code>scribe</code> with different arguments and check the results.</p>
+<p>Here is an example:</p>
+<div class="sourceCode" id="annotated-cell-228"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-228" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-228-1" class="code-annotation-target"><a href="#annotated-cell-228-1" aria-hidden="true" tabindex="-1"></a>describe<span class="op">(</span><span class="st">'basic functionality'</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-228" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-228-2" class="code-annotation-target"><a href="#annotated-cell-228-2" aria-hidden="true" tabindex="-1"></a>    it<span class="op">(</span><span class="st">'should handle simple arrays'</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-228" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-228-3" class="code-annotation-target"><a href="#annotated-cell-228-3" aria-hidden="true" tabindex="-1"></a>         <span class="va">assert</span><span class="op">.</span><span class="va">are</span><span class="op">.</span>equal<span class="op">(</span><span class="st">'[1, 2, 3]'</span><span class="op">,</span> scribe<span class="op">({</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span> <span class="op">}))</span></span>
+<span id="annotated-cell-228-4"><a href="#annotated-cell-228-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span><span class="op">)</span></span>
+<span id="annotated-cell-228-5"><a href="#annotated-cell-228-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">)</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-228" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-228" data-code-lines="1" data-code-annotation="1">The <code>describe</code> function groups related tests together.</span>
+</dd>
+<dt data-target-cell="annotated-cell-228" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-228" data-code-lines="2" data-code-annotation="2">The <code>it</code> function defines a single test.</span>
+</dd>
+<dt data-target-cell="annotated-cell-228" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-228" data-code-lines="3" data-code-annotation="3">The <code>assert.are.equal</code> function checks that the result of calling <code>scribe</code> with the given arguments equals the expected <em>golden</em> result.</span>
+</dd>
+</dl>
+<p>Cursor generated many tests like this, saved them to a test file and then asked me to run them. Most of the tests failed!</p>
+<p>A quick look at the tests revealed that Cursor had generated perfectly reasonable tests but got the <em>golden</em> results wrong.</p>
+<p>Did you spot the error? That last example should have read:</p>
+<div class="sourceCode" id="annotated-cell-229"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-229" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-229-1" class="code-annotation-target"><a href="#annotated-cell-229-1" aria-hidden="true" tabindex="-1"></a>        <span class="va">assert</span><span class="op">.</span><span class="va">are</span><span class="op">.</span>equal<span class="op">(</span><span class="st">'[ 1, 2, 3 ]'</span><span class="op">,</span> scribe<span class="op">({</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span> <span class="op">}))</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-229" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-229" data-code-lines="1" data-code-annotation="1">Note the space between the <code>[</code> and the <code>1</code> and the space between the <code>3</code> and the <code>]</code>.</span>
+</dd>
+</dl>
+<p>I then prompted Cursor to fix the <em>issue</em> (though I realise now that I should have it to fix the <em>tests</em>). It mused, “I see the issue, I will fix it,” and then altered <code>scribe.lua</code> to get it to match the incorrect <em>golden</em> results!</p>
+<p>Fortunately, the tool has a built-in timeline view, so I could easily undo the changes it made.</p>
+<div class="admonition caution">
+    <table><tbody><tr>
+    <td class="icon"> <i class="fa icon-caution" title="Caution"></i></td>
+    <td class="content">
+    
+Prompting AI to write code can be a great way to change existing code in unexpected ways!
+</td></tr></tbody></table></div>
+</section>
+<section id="a-real-bug" class="level3">
+<h3 class="anchored" data-anchor-id="a-real-bug">A Real Bug</h3>
+<p>Once we were over that hurdle, we were able to get <em>almost</em> all the tests to pass. The critical word there is “almost”!</p>
+<p><code>Busted</code> reported a failure on the following test:</p>
+<div class="sourceCode" id="cb119"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a>it<span class="op">(</span><span class="st">'should handle tables with shared references'</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">shared</span> <span class="op">=</span> <span class="op">{</span> <span class="va">x</span> <span class="op">=</span> <span class="dv">1</span> <span class="op">}</span></span>
+<span id="cb119-3"><a href="#cb119-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">input</span> <span class="op">=</span> <span class="op">{</span> <span class="va">a</span> <span class="op">=</span> <span class="op">{</span> <span class="va">b</span> <span class="op">=</span> <span class="va">shared</span> <span class="op">},</span> <span class="va">c</span> <span class="op">=</span> <span class="op">{</span> <span class="va">d</span> <span class="op">=</span> <span class="va">shared</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb119-4"><a href="#cb119-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">expected</span> <span class="op">=</span> <span class="st">'{</span><span class="sc">\n</span><span class="st"> a = {</span><span class="sc">\n</span><span class="st"> b = { x = 1 }</span><span class="sc">\n</span><span class="st"> },</span><span class="sc">\n</span><span class="st"> c = { d = &lt;a.b&gt; }</span><span class="sc">\n</span><span class="st">}'</span></span>
+<span id="cb119-5"><a href="#cb119-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">assert</span><span class="op">.</span><span class="va">are</span><span class="op">.</span>equal<span class="op">(</span><span class="va">expected</span><span class="op">,</span> <span class="va">scribe</span><span class="op">.</span>pretty<span class="op">(</span><span class="va">input</span><span class="op">))</span></span>
+<span id="cb119-6"><a href="#cb119-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Given the earlier issues with the LLM’s idea of <em>golden</em> results, agreeing there was a real problem here took a while. In hindsight, it is obvious there is one!</p>
+<p>If we extract the various bits of <code>Busted</code> machinery, the test looks like this:</p>
+<div class="sourceCode" id="cb120"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">shared</span> <span class="op">=</span> <span class="op">{</span> <span class="va">x</span> <span class="op">=</span> <span class="dv">1</span> <span class="op">}</span></span>
+<span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">input</span> <span class="op">=</span> <span class="op">{</span> <span class="va">a</span> <span class="op">=</span> <span class="op">{</span> <span class="va">b</span> <span class="op">=</span> <span class="va">shared</span> <span class="op">},</span> <span class="va">c</span> <span class="op">=</span> <span class="op">{</span> <span class="va">d</span> <span class="op">=</span> <span class="va">shared</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb120-3"><a href="#cb120-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span><span class="op">(</span><span class="va">scribe</span><span class="op">.</span>pretty<span class="op">(</span><span class="va">input</span><span class="op">))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>With a bit of thought, it is clear that the output should be:</p>
+<div class="sourceCode" id="cb121"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb121-2"><a href="#cb121-2" aria-hidden="true" tabindex="-1"></a>    a = {                           -- &lt;1&gt;</span>
+<span id="cb121-3"><a href="#cb121-3" aria-hidden="true" tabindex="-1"></a>        b = { x = 1 }               -- &lt;2&gt;</span>
+<span id="cb121-4"><a href="#cb121-4" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb121-5"><a href="#cb121-5" aria-hidden="true" tabindex="-1"></a>    c = { d = &lt;a.b&gt; }               -- &lt;3&gt;</span>
+<span id="cb121-6"><a href="#cb121-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol type="1">
+<li><code>a</code> has sub-tables and should have fields on new lines.</li>
+<li><code>b</code> is a simple table so that it will have its fields on a single line.</li>
+<li>Because <code>a</code> is alphabetically before <code>c</code>, the definition of <code>shared</code> will be already printed before we get to the definition of <code>c</code>. <br> This means that <code>c</code> has no “real” sub-table, so it should appear on one line.</li>
+</ol>
+<p>When we ran the test, we first got the expected output! That was a bit disconcerting, and I cast another accusatory at Cursor!</p>
+<p>However, when we reran the test, we got the following output:</p>
+<div class="sourceCode" id="cb122"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb122-2"><a href="#cb122-2" aria-hidden="true" tabindex="-1"></a>    a = { b = { x = 1 } },       -- &lt;1&gt;</span>
+<span id="cb122-3"><a href="#cb122-3" aria-hidden="true" tabindex="-1"></a>    c = {</span>
+<span id="cb122-4"><a href="#cb122-4" aria-hidden="true" tabindex="-1"></a>        d = &lt;a.b&gt;                -- &lt;2&gt;</span>
+<span id="cb122-5"><a href="#cb122-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb122-6"><a href="#cb122-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol type="1">
+<li>This is way off, as clearly <code>a</code> has a sub-table and should have fields on new lines.</li>
+<li>Moreover, <code>c</code> is a simple table and should have all its fields printed inline!</li>
+</ol>
+</section>
+<section id="quick-resolution" class="level3">
+<h3 class="anchored" data-anchor-id="quick-resolution">Quick Resolution</h3>
+<p>Rerunning the test, the output oscillated between the correct and incorrect results! That gives off a particular odour; we are iterating over the table in a different order each time. That seems to be the case even though we use the <code>ordered_pairs</code> iterator in <code>table_string</code>.</p>
+<div class="admonition note">
+    <table><tbody><tr>
+    <td class="icon"> <i class="fa icon-note" title="Note"></i></td>
+    <td class="content">
+    
+We did have a shot at getting the LLM to fix the problem, but it just rewrote a lot of code and introduced new bugs. The LLM is not yet ready to solve this subtle problem.
+</td></tr></tbody></table></div>
+<p>Once we had established that the problem was due to the iteration order, it was time to fix it. Using <code>ordered_pairs</code> in <code>table_string</code>, we expected to get the table elements in the same order each time. Looking through the code, we found that the <code>metadata</code> method was <em>not</em> using that iterator.</p>
+<p>A quick fix is to slightly alter the signature of <code>metadata</code> to take an optional <code>comparator</code> function. We can then use that and move the main loop from <code>pairs</code> to <code>ordered_pairs</code>:</p>
+<div class="sourceCode" id="annotated-cell-234"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-234" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-234-1" class="code-annotation-target"><a href="#annotated-cell-234-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> metadata<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-234-2"><a href="#annotated-cell-234-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="annotated-cell-234-3"><a href="#annotated-cell-234-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="kw">function</span> process<span class="op">(</span><span class="va">tbl</span><span class="op">)</span></span>
+<span id="annotated-cell-234-4"><a href="#annotated-cell-234-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">size</span><span class="op">,</span> <span class="va">array</span><span class="op">,</span> <span class="va">subs</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="kw">true</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="annotated-cell-234-5"><a href="#annotated-cell-234-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">children</span> <span class="op">=</span> <span class="op">{}</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-234" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-234-6" class="code-annotation-target"><a href="#annotated-cell-234-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">iter</span> <span class="op">=</span> ordered_pairs<span class="op">(</span><span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-234-7"><a href="#annotated-cell-234-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">v</span> <span class="kw">in</span> iter<span class="op">(</span><span class="va">tbl</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-234-8"><a href="#annotated-cell-234-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">...</span></span>
+<span id="annotated-cell-234-9"><a href="#annotated-cell-234-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="annotated-cell-234-10"><a href="#annotated-cell-234-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">size</span><span class="op">,</span> <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">array</span><span class="op">,</span> <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">subs</span> <span class="op">=</span> <span class="va">size</span><span class="op">,</span> <span class="va">array</span><span class="op">,</span> <span class="va">subs</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-234" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-234-11" class="code-annotation-target"><a href="#annotated-cell-234-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">child</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">children</span><span class="op">)</span> <span class="cf">do</span> process<span class="op">(</span><span class="va">child</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="annotated-cell-234-12"><a href="#annotated-cell-234-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="annotated-cell-234-13"><a href="#annotated-cell-234-13" aria-hidden="true" tabindex="-1"></a>    process<span class="op">(</span><span class="va">root_tbl</span><span class="op">)</span></span>
+<span id="annotated-cell-234-14"><a href="#annotated-cell-234-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">md</span></span>
+<span id="annotated-cell-234-15"><a href="#annotated-cell-234-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="annotated-cell-234-16"><a href="#annotated-cell-234-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-234-17"><a href="#annotated-cell-234-17" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> table_string<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="va">opts</span><span class="op">)</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-234" data-target-annotation="4" onclick="event.preventDefault();">4</a><span id="annotated-cell-234-18" class="code-annotation-target"><a href="#annotated-cell-234-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">md</span> <span class="op">=</span> metadata<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="va">opts</span><span class="op">.</span><span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-234-19"><a href="#annotated-cell-234-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="annotated-cell-234-20"><a href="#annotated-cell-234-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-234" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-234" data-code-lines="1" data-code-annotation="1">The <code>metadata</code> method is now passed the <code>comparator</code> function.</span>
+</dd>
+<dt data-target-cell="annotated-cell-234" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-234" data-code-lines="6" data-code-annotation="2">The <code>ordered_pairs</code> function is used to iterate over the table.</span>
+</dd>
+<dt data-target-cell="annotated-cell-234" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-234" data-code-lines="11" data-code-annotation="3">The <code>ipairs</code> function is fine here as we are over an array.</span>
+</dd>
+<dt data-target-cell="annotated-cell-234" data-target-annotation="4">4</dt>
+<dd>
+<span data-code-cell="annotated-cell-234" data-code-lines="18" data-code-annotation="4"><code>table_string</code> passes the <code>comparator</code> from the options table to <code>metadata</code> method.</span>
+</dd>
+</dl>
+<p>This change fixed the problem, and the test now passes. Repeating the test, we get the correct output every time.</p>
+</section>
+<section id="a-more-elegant-solution" class="level3">
+<h3 class="anchored" data-anchor-id="a-more-elegant-solution">A More Elegant Solution</h3>
+<p><code>scribe</code> aims to be a general solution for viewing arbitrary tables in the best human-readable format. It does not aspire to be maximally efficient in pursuit of that goal. However, our quick solution suffers from an obvious efficiency issue.</p>
+<p>We are instantiating <code>ordered_pairs</code> <em>twice</em>; once in <code>table_string</code> and once in <code>metadata</code>. The table keys must be extracted and sorted each time we do this.</p>
+<p>Well, we have a <code>metadata</code> method already. Why not make the appropriate iterator another piece of metadata for each table?</p>
+<p>We can then use that iterator in the <code>table_string</code> method. This way, we only pay the price for sorting the keys once.</p>
+<p>There are several possibilities for the iterator:</p>
+<ul>
+<li>We should use <code>ipairs</code> if the table is an array.</li>
+<li>We should use <code>pairs</code> if the <code>comparator</code> is <code>false</code>.</li>
+<li>We should use some form of <code>ordered_pairs</code> if we have a comparator function.</li>
+</ul>
+<p>Before we iterate through the depths of a table, we first write a helper function to get some metadata fields for the top level of a table:</p>
+<div class="sourceCode" id="cb123"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> top_level_metadata<span class="op">(</span><span class="va">tbl</span><span class="op">,</span> <span class="va">comparator</span><span class="op">)</span></span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This function will return three values:</p>
+<ul>
+<li>A boolean indicating if the table is an array.</li>
+<li>The size of the table.</li>
+<li>The appropriate iterator to use to iterate over the table.</li>
+</ul>
+<p>We can then use this helper function to get the metadata fields all the way down the table:</p>
+<div class="sourceCode" id="annotated-cell-236"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-236-1"><a href="#annotated-cell-236-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> metadata<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-236-2"><a href="#annotated-cell-236-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">md</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="annotated-cell-236-3"><a href="#annotated-cell-236-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">md</span><span class="op">[</span><span class="va">root_tbl</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">refs</span> <span class="op">=</span> <span class="dv">1</span> <span class="op">}</span></span>
+<span id="annotated-cell-236-4"><a href="#annotated-cell-236-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-236-5"><a href="#annotated-cell-236-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="kw">function</span> process<span class="op">(</span><span class="va">tbl</span><span class="op">)</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-236" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-236-6" class="code-annotation-target"><a href="#annotated-cell-236-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">array</span><span class="op">,</span> <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">size</span><span class="op">,</span> <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">iter</span> <span class="op">=</span> top_level_metadata<span class="op">(</span><span class="va">tbl</span><span class="op">,</span> <span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-236-7"><a href="#annotated-cell-236-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-236-8"><a href="#annotated-cell-236-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">subs</span><span class="op">,</span> <span class="va">sub_tables</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="op">{}</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-236" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-236-9" class="code-annotation-target"><a href="#annotated-cell-236-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">iter</span> <span class="op">=</span> <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">iter</span></span>
+<span id="annotated-cell-236-10"><a href="#annotated-cell-236-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">v</span> <span class="kw">in</span> iter<span class="op">(</span><span class="va">tbl</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-236-11"><a href="#annotated-cell-236-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="fu">type</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">==</span> <span class="st">'table'</span> <span class="cf">then</span></span>
+<span id="annotated-cell-236-12"><a href="#annotated-cell-236-12" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="va">md</span><span class="op">[</span><span class="va">v</span><span class="op">]</span> <span class="cf">then</span></span>
+<span id="annotated-cell-236-13"><a href="#annotated-cell-236-13" aria-hidden="true" tabindex="-1"></a>                    <span class="va">md</span><span class="op">[</span><span class="va">v</span><span class="op">].</span><span class="va">refs</span> <span class="op">=</span> <span class="va">md</span><span class="op">[</span><span class="va">v</span><span class="op">].</span><span class="va">refs</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="annotated-cell-236-14"><a href="#annotated-cell-236-14" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span></span>
+<span id="annotated-cell-236-15"><a href="#annotated-cell-236-15" aria-hidden="true" tabindex="-1"></a>                    <span class="va">subs</span> <span class="op">=</span> <span class="va">subs</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="annotated-cell-236-16"><a href="#annotated-cell-236-16" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">table.insert</span><span class="op">(</span><span class="va">sub_tables</span><span class="op">,</span> <span class="va">v</span><span class="op">)</span></span>
+<span id="annotated-cell-236-17"><a href="#annotated-cell-236-17" aria-hidden="true" tabindex="-1"></a>                    <span class="va">md</span><span class="op">[</span><span class="va">v</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="va">refs</span> <span class="op">=</span> <span class="dv">1</span> <span class="op">}</span></span>
+<span id="annotated-cell-236-18"><a href="#annotated-cell-236-18" aria-hidden="true" tabindex="-1"></a>                <span class="cf">end</span></span>
+<span id="annotated-cell-236-19"><a href="#annotated-cell-236-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">end</span></span>
+<span id="annotated-cell-236-20"><a href="#annotated-cell-236-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="annotated-cell-236-21"><a href="#annotated-cell-236-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">subs</span> <span class="op">=</span> <span class="va">subs</span></span>
+<span id="annotated-cell-236-22"><a href="#annotated-cell-236-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span><span class="op">,</span> <span class="va">sub_table</span> <span class="kw">in</span> <span class="fu">ipairs</span><span class="op">(</span><span class="va">sub_tables</span><span class="op">)</span> <span class="cf">do</span> process<span class="op">(</span><span class="va">sub_table</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="annotated-cell-236-23"><a href="#annotated-cell-236-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="annotated-cell-236-24"><a href="#annotated-cell-236-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-236-25"><a href="#annotated-cell-236-25" aria-hidden="true" tabindex="-1"></a>    process<span class="op">(</span><span class="va">root_tbl</span><span class="op">)</span></span>
+<span id="annotated-cell-236-26"><a href="#annotated-cell-236-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">md</span></span>
+<span id="annotated-cell-236-27"><a href="#annotated-cell-236-27" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-236" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-236" data-code-lines="6" data-code-annotation="1">The <code>top_level_metadata</code> function is called to get three metadata fields for the top level of the table.</span>
+</dd>
+<dt data-target-cell="annotated-cell-236" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-236" data-code-lines="9" data-code-annotation="2">One of those three values is the appropriate iterator to iterate over the table we use here.</span>
+</dd>
+</dl>
+<p>The <code>table_string</code> method is then updated to use the iterator from the metadata:</p>
+<div class="sourceCode" id="annotated-cell-237"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-237-1"><a href="#annotated-cell-237-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> table_string<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="va">opts</span><span class="op">)</span></span>
+<span id="annotated-cell-237-2"><a href="#annotated-cell-237-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">md</span> <span class="op">=</span> metadata<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="va">opts</span><span class="op">.</span><span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-237-3"><a href="#annotated-cell-237-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="annotated-cell-237-4"><a href="#annotated-cell-237-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="kw">function</span> process<span class="op">(</span><span class="va">tbl</span><span class="op">,</span> <span class="va">path</span><span class="op">)</span></span>
+<span id="annotated-cell-237-5"><a href="#annotated-cell-237-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">...</span></span>
+<span id="annotated-cell-237-6"><a href="#annotated-cell-237-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">i</span><span class="op">,</span> <span class="va">iter</span> <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="va">md</span><span class="op">[</span><span class="va">tbl</span><span class="op">].</span><span class="va">iter</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-237" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-237-7" class="code-annotation-target"><a href="#annotated-cell-237-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="va">k</span><span class="op">,</span> <span class="va">v</span> <span class="kw">in</span> iter<span class="op">(</span><span class="va">tbl</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-237-8"><a href="#annotated-cell-237-8" aria-hidden="true" tabindex="-1"></a>            <span class="va">i</span> <span class="op">=</span> <span class="va">i</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="annotated-cell-237-9"><a href="#annotated-cell-237-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">...</span></span>
+<span id="annotated-cell-237-10"><a href="#annotated-cell-237-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="annotated-cell-237-11"><a href="#annotated-cell-237-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="annotated-cell-237-12"><a href="#annotated-cell-237-12" aria-hidden="true" tabindex="-1"></a>    process<span class="op">(</span><span class="va">root_tbl</span><span class="op">,</span> <span class="st">''</span><span class="op">)</span></span>
+<span id="annotated-cell-237-13"><a href="#annotated-cell-237-13" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-237" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-237" data-code-lines="7" data-code-annotation="1">The <code>iter</code> function is reused here. It already has the sorted array of table keys if needed.</span>
+</dd>
+</dl>
+<p>It only remains to look at the <code>top_level_metadata</code> function shown here in full:</p>
+<div class="sourceCode" id="annotated-cell-238"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-238-1"><a href="#annotated-cell-238-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> top_level_metadata<span class="op">(</span><span class="va">tbl</span><span class="op">,</span> <span class="va">comparator</span><span class="op">)</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-238-2" class="code-annotation-target"><a href="#annotated-cell-238-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">comparator</span> <span class="op">==</span> <span class="kw">false</span> <span class="cf">then</span></span>
+<span id="annotated-cell-238-3"><a href="#annotated-cell-238-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">array</span><span class="op">,</span> <span class="va">size</span> <span class="op">=</span> <span class="kw">true</span><span class="op">,</span> <span class="dv">0</span></span>
+<span id="annotated-cell-238-4"><a href="#annotated-cell-238-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="cn">_</span> <span class="kw">in</span> <span class="fu">pairs</span><span class="op">(</span><span class="va">tbl</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-238-5"><a href="#annotated-cell-238-5" aria-hidden="true" tabindex="-1"></a>            <span class="va">size</span> <span class="op">=</span> <span class="va">size</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="annotated-cell-238-6"><a href="#annotated-cell-238-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">array</span> <span class="kw">and</span> <span class="va">tbl</span><span class="op">[</span><span class="va">size</span><span class="op">]</span> <span class="op">==</span> <span class="kw">nil</span> <span class="cf">then</span> <span class="va">array</span> <span class="op">=</span> <span class="kw">false</span> <span class="cf">end</span></span>
+<span id="annotated-cell-238-7"><a href="#annotated-cell-238-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-238-8" class="code-annotation-target"><a href="#annotated-cell-238-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">iter</span> <span class="op">=</span> <span class="va">array</span> <span class="kw">and</span> <span class="fu">ipairs</span> <span class="kw">or</span> <span class="fu">pairs</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-238-9" class="code-annotation-target"><a href="#annotated-cell-238-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">array</span><span class="op">,</span> <span class="va">size</span><span class="op">,</span> <span class="va">iter</span></span>
+<span id="annotated-cell-238-10"><a href="#annotated-cell-238-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="annotated-cell-238-11"><a href="#annotated-cell-238-11" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="4" onclick="event.preventDefault();">4</a><span id="annotated-cell-238-12" class="code-annotation-target"><a href="#annotated-cell-238-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">array</span><span class="op">,</span> <span class="va">size</span><span class="op">,</span> <span class="va">keys</span> <span class="op">=</span> <span class="kw">true</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="op">{}</span></span>
+<span id="annotated-cell-238-13"><a href="#annotated-cell-238-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">k</span><span class="op">,</span> <span class="cn">_</span> <span class="kw">in</span> <span class="fu">pairs</span><span class="op">(</span><span class="va">tbl</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-238-14"><a href="#annotated-cell-238-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">size</span> <span class="op">=</span> <span class="va">size</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="annotated-cell-238-15"><a href="#annotated-cell-238-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">array</span> <span class="kw">and</span> <span class="va">tbl</span><span class="op">[</span><span class="va">size</span><span class="op">]</span> <span class="op">==</span> <span class="kw">nil</span> <span class="cf">then</span> <span class="va">array</span> <span class="op">=</span> <span class="kw">false</span> <span class="cf">end</span></span>
+<span id="annotated-cell-238-16"><a href="#annotated-cell-238-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">table.insert</span><span class="op">(</span><span class="va">keys</span><span class="op">,</span> <span class="va">k</span><span class="op">)</span></span>
+<span id="annotated-cell-238-17"><a href="#annotated-cell-238-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="5" onclick="event.preventDefault();">5</a><span id="annotated-cell-238-18" class="code-annotation-target"><a href="#annotated-cell-238-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">array</span> <span class="cf">then</span> <span class="cf">return</span> <span class="va">array</span><span class="op">,</span> <span class="va">size</span><span class="op">,</span> <span class="fu">ipairs</span> <span class="cf">end</span></span>
+<span id="annotated-cell-238-19"><a href="#annotated-cell-238-19" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="6" onclick="event.preventDefault();">6</a><span id="annotated-cell-238-20" class="code-annotation-target"><a href="#annotated-cell-238-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">comparator</span> <span class="op">==</span> <span class="kw">nil</span> <span class="cf">then</span> <span class="va">comparator</span> <span class="op">=</span> <span class="va">compare</span> <span class="cf">end</span></span>
+<span id="annotated-cell-238-21"><a href="#annotated-cell-238-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">table.sort</span><span class="op">(</span><span class="va">keys</span><span class="op">,</span> <span class="va">comparator</span><span class="op">)</span></span>
+<span id="annotated-cell-238-22"><a href="#annotated-cell-238-22" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-238" data-target-annotation="7" onclick="event.preventDefault();">7</a><span id="annotated-cell-238-23" class="code-annotation-target"><a href="#annotated-cell-238-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">iter</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span></span>
+<span id="annotated-cell-238-24"><a href="#annotated-cell-238-24" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="annotated-cell-238-25"><a href="#annotated-cell-238-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="annotated-cell-238-26"><a href="#annotated-cell-238-26" aria-hidden="true" tabindex="-1"></a>            <span class="va">i</span> <span class="op">=</span> <span class="va">i</span> <span class="op">+</span> <span class="dv">1</span></span>
+<span id="annotated-cell-238-27"><a href="#annotated-cell-238-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">keys</span><span class="op">[</span><span class="va">i</span><span class="op">],</span> <span class="va">t</span><span class="op">[</span><span class="va">keys</span><span class="op">[</span><span class="va">i</span><span class="op">]]</span></span>
+<span id="annotated-cell-238-28"><a href="#annotated-cell-238-28" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span></span>
+<span id="annotated-cell-238-29"><a href="#annotated-cell-238-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="annotated-cell-238-30"><a href="#annotated-cell-238-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">array</span><span class="op">,</span> <span class="va">size</span><span class="op">,</span> <span class="va">iter</span></span>
+<span id="annotated-cell-238-31"><a href="#annotated-cell-238-31" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-238" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="2" data-code-annotation="1">If the comparator is <code>false</code>, we will use a default Lua iterator.</span>
+</dd>
+<dt data-target-cell="annotated-cell-238" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="8" data-code-annotation="2">If the table is an array, we will use <code>ipairs</code>; otherwise, we will use <code>pairs</code>.</span>
+</dd>
+<dt data-target-cell="annotated-cell-238" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="9" data-code-annotation="3">We return three bits of metadata — an array flag, the size of the table and the iterator.</span>
+</dd>
+<dt data-target-cell="annotated-cell-238" data-target-annotation="4">4</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="12" data-code-annotation="4">If the comparator is anything but <code>false</code>, we may have to sort the table keys so we collect them along the way.</span>
+</dd>
+<dt data-target-cell="annotated-cell-238" data-target-annotation="5">5</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="18" data-code-annotation="5">If the table is an array, we don’t need the keys and return <code>ipairs</code> as the appropriate iterator.</span>
+</dd>
+<dt data-target-cell="annotated-cell-238" data-target-annotation="6">6</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="20" data-code-annotation="6">Sort the keys using the comparator function if one was provided or the default one.</span>
+</dd>
+<dt data-target-cell="annotated-cell-238" data-target-annotation="7">7</dt>
+<dd>
+<span data-code-cell="annotated-cell-238" data-code-lines="23" data-code-annotation="7"><code>iter</code> is a <em>closure</em>, a local function with access to the <code>keys</code> variable. It is the appropriate iterator for the table in question.</span>
+</dd>
+</dl>
+<p>Note that the <code>iter</code> function takes a table as an argument. In practice, <code>iter</code> will only be called with <code>tbl</code>, where the <code>keys</code> come from. However, <code>iter</code> is written in the style of a <em>generic</em> iterator that can be used with any table. The <code>metadata</code> method and the <code>table_string</code> methods can call <code>for k,v in iter(tbl) do ... end</code> and not worry about whether <code>iter</code> is <code>ipairs</code>, <code>pairs</code> or something completely custom.</p>
+</section>
+<section id="conclusion" class="level3">
+<h3 class="anchored" data-anchor-id="conclusion">Conclusion</h3>
+<p>Lots of fun with AI!</p>
+<p>If you do let something like Cursor loose to fix bugs in your codebase, you need to be comfortable using the git history or perhaps the timeline tool to backtrack! It’s probably a good idea to have the LLM work in its git branch and not mix the changes with your code until you approve them.</p>
+<p>On the other hand, Cursor did come up with a simple test that pointed out an actual issue with the code. Its ability to generate lots of tests from a prompt is impressive. Its tests are at least a little independent of the ones you will likely have written yourself.</p>
 
 
 </section>
