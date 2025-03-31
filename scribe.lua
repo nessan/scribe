@@ -61,21 +61,17 @@ local function indent_string(str, indent, ignore_first_line)
     -- Does the input string finish with a newline character?
     local ends_with_newline = str:sub(-1) == "\n"
 
-    -- Build up the indented copy
-    local indented_str = ""
-
-    -- Iterate through the input string line by line using an appropriate Lua pattern for a line of text.
+    -- Build up the indented copy line by line in a table.
+    local lines = {}
     local first_line = true
-    for line in str:gmatch("([^\n]*)\n?") do
-        if not first_line then indented_str = indented_str .. '\n' end
+    for line in str:gmatch("[^\r\n]+") do
         local tab = first_line and ignore_first_line and '' or indent
-        indented_str = indented_str .. tab .. line
+        table.insert(lines, tab .. line)
         first_line = false
     end
-
-    -- If the input string ended with a newline character then so should the output string.
-    if ends_with_newline then indented_str = indented_str .. "\n" end
-    return indented_str
+    local retval = table.concat(lines, "\n")
+    if ends_with_newline then retval = retval .. "\n" end
+    return retval
 end
 
 --- Private function: Returns a simple string representation of any Lua `obj`.

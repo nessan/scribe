@@ -1,0 +1,78 @@
+## A Small Optimisation
+
+A Reddit commenter suggested that the `indent_string` function could be optimised by using a table to store the lines.
+
+Here is the original version that builds up the indented string by appending to a string we eventually return:
+```lua
+local function indent_string_orig(str, indent, ignore_first_line)
+    ignore_first_line = ignore_first_line or false
+    if not indent or indent == "" or not str or str == "" then return str end
+    local ends_with_newline = str:sub(-1) == "\n"
+
+    local indented_str = ""
+    local first_line = true
+    for line in str:gmatch("([^\n]*)\n?") do
+        if not first_line then indented_str = indented_str .. '\n' end
+        local tab = first_line and ignore_first_line and '' or indent
+        indented_str = indented_str .. tab .. line
+        first_line = false
+    end
+    if ends_with_newline then indented_str = indented_str .. "\n" end
+    return indented_str
+end
+```
+
+Here is the optimised version that builds up the indented string by appending to a table of lines and then joining them together:
+```lua
+local function indent_string(str, indent, ignore_first_line)
+    ignore_first_line = ignore_first_line or false
+    if not indent or indent == "" or not str or str == "" then return str end
+    local ends_with_newline = str:sub(-1) == "\n"
+
+    local lines = {}                                                            -- <1>
+    local first_line = true
+    for line in str:gmatch("[^\r\n]+") do
+        local tab = first_line and ignore_first_line and '' or indent
+        table.insert(lines, tab .. line)                                        -- <2>
+        first_line = false
+    end
+    local retval = table.concat(lines, "\n")                                    -- <3>
+    if ends_with_newline then retval = retval .. "\n" end                       -- <4>
+    return retval
+end
+```
+1. We create a table to store the lines.
+2. We insert each line into the table.
+3. We join the lines together.
+4. If the input string ended with a newline character then so should the output string.
+
+Benchmarking the two versions:
+```lua
+local function benchmark_indents()
+    local test_str = string.rep('line\n', 10000) -- Create a large test string
+    local iterations = 100
+
+    -- Benchmark `indent_string_orig`
+    print('Benchmarking indent_string_orig ...')
+    local start_time = os.clock()
+    for i = 1, iterations do
+        indent_string_orig(test_str, '    ')
+    end
+    local t1 = os.clock() - start_time
+
+    -- Benchmark `indent_string`
+    print('Benchmarking indent_string ...')
+    start_time = os.clock()
+    for i = 1, iterations do
+        indent_string(test_str, '    ')
+    end
+    local t2 = os.clock() - start_time
+
+    -- Print results
+    print(string.format("indent_string_orig took: %.4f seconds", t1))
+    print(string.format("indent_string took:      %.4f seconds", t2))
+    print(string.format("indent_string is %.2fx %s than indent_string_orig",
+                        math.abs(t1 / t2), t2 < t1 and "faster" or "slower"))
+end
+```
+The optimised version is faster by a factor of 10 or more for large strings.
