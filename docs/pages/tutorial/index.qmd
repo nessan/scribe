@@ -27,3 +27,4 @@ format:
 {{< include _metamethods.qmd >}}
 {{< include _module.qmd >}}
 {{< include _formatted-output.qmd >}}
+{{< include _bug.qmd >}}

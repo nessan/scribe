@@ -13,7 +13,12 @@ Lua: "[Lua](https://www.lua.org)"
 ZeroBrane: "[ZeroBrane Studio](https://studio.zerobrane.com)"
 VSCode: "[Visual Studio Code](https://code.visualstudio.com)"
 VSCode-Lua: "[Lua for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=sumneko.lua)"
-LuaRock": "[LuaRocks](https://luarocks.org)"
+LuaRocks: "[LuaRocks](https://luarocks.org)"
+Cursor: "[Cursor](https://www.cursor.com)"
+Windsurf: "[Windsurf](https://github.com/nessan/windsurf)"
+Copilot: "[Copilot](https://copilot.github.com)"
+VSCode: "[VSCode](https://code.visualstudio.com)"
+Busted: "[`Busted`](https://olivinelabs.github.io/busted/)"
 
 # The Lua reference manual:
 lua:

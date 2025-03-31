@@ -1,5 +1,5 @@
 package = "scribe"
-version = "1.0.0-1"
+version = "1.1.0-1"
 source = {
   url = "git://github.com/nessan/scribe",
 }

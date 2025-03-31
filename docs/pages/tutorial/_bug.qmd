@@ -1,0 +1,299 @@
+## A Subtle Bug!
+
+### Introduction
+
+`scribe` has existed for a while now.
+
+The obvious use case is to print tables to the console as a simple form of debugging.
+It is an overkill for that purpose unless you deal with tables containing cycles.
+But `scribe` is a small, stand-alone module that is very simple to use, so why not?
+
+We use the module to add custom `__tostring` metamethods to various classes in a larger Lua codebase.
+Those methods use the ability to customise the formatting options and exercise the full range of features.
+
+`scribe` is entirely self-contained and does not require any external dependencies.
+This makes it a great candidate for a little tutorial project like this one.
+
+It also makes it a playground for exploring the capabilities of LLMs.
+
+### Pairs Programming with AI
+
+We recently have looked into the capabilities of {Cursor} and {Windsurf} to see how well they can help us write code.
+
+They both are forks of the ubiquitous {VSCode} editor, designed to allow the LLM's broader access to the codebase.
+Under the covers, they use the same LLMs that power {Copilot}, but they are a step up from the current iteration of that technology.
+
+We prompted Cursor to write some tests for `scribe` using the {Busted} testing framework.
+
+Without going into too much detail, the tests are many little functions that call `scribe` with different arguments and check the results.
+
+Here is an example:
+```lua
+describe('basic functionality', function()                      -- <1>
+    it('should handle simple arrays', function()                -- <2>
+         assert.are.equal('[1, 2, 3]', scribe({ 1, 2, 3 }))     -- <3>
+    end)
+end)
+```
+1. The `describe` function groups related tests together.
+2. The `it` function defines a single test.
+3. The `assert.are.equal` function checks that the result of calling `scribe` with the given arguments equals the expected *golden* result.
+
+Cursor generated many tests like this, saved them to a test file and then asked me to run them.
+Most of the tests failed!
+
+A quick look at the tests revealed that Cursor had generated perfectly reasonable tests but got the *golden* results wrong.
+
+Did you spot the error?
+That last example should have read:
+```lua
+        assert.are.equal('[ 1, 2, 3 ]', scribe({ 1, 2, 3 }))     -- <1>
+```
+1. Note the space between the `[` and the `1` and the space between the `3` and the `]`.
+
+I then prompted Cursor to fix the *issue* (though I realise now that I should have it to fix the *tests*).
+It mused, "I see the issue, I will fix it," and then altered `scribe.lua` to get it to match the incorrect *golden* results!
+
+Fortunately, the tool has a built-in timeline view, so I could easily undo the changes it made.
+
+CAUTION: Prompting AI to write code can be a great way to change existing code in unexpected ways!
+
+### A Real Bug
+
+Once we were over that hurdle, we were able to get *almost* all the tests to pass.
+The critical word there is "almost"!
+
+`Busted` reported a failure on the following test:
+```lua
+it('should handle tables with shared references', function()
+    local shared = { x = 1 }
+    local input = { a = { b = shared }, c = { d = shared } }
+    local expected = '{\n a = {\n b = { x = 1 }\n },\n c = { d = <a.b> }\n}'
+    assert.are.equal(expected, scribe.pretty(input))
+end)
+```
+Given the earlier issues with the LLM's idea of *golden* results, agreeing there was a real problem here took a while.
+In hindsight, it is obvious there is one!
+
+If we extract the various bits of `Busted` machinery, the test looks like this:
+```lua
+local shared = { x = 1 }
+local input = { a = { b = shared }, c = { d = shared } }
+print(scribe.pretty(input))
+```
+With a bit of thought, it is clear that the output should be:
+```txt
+{
+    a = {                           -- <1>
+        b = { x = 1 }               -- <2>
+    },
+    c = { d = <a.b> }               -- <3>
+}
+```
+1. `a` has sub-tables and should have fields on new lines.
+2. `b` is a simple table so that it will have its fields on a single line.
+3. Because `a` is alphabetically before `c`, the definition of `shared` will be already printed before we get to the definition of `c`. <br> This means that `c` has no "real" sub-table, so it should appear on one line.
+
+When we ran the test, we first got the expected output!
+That was a bit disconcerting, and I cast another accusatory at Cursor!
+
+However, when we reran the test, we got the following output:
+```txt
+{
+    a = { b = { x = 1 } },       -- <1>
+    c = {
+        d = <a.b>                -- <2>
+    }
+}
+```
+1. This is way off, as clearly `a` has a sub-table and should have fields on new lines.
+2. Moreover, `c` is a simple table and should have all its fields printed inline!
+
+### Quick Resolution
+
+Rerunning the test, the output oscillated between the correct and incorrect results!
+That gives off a particular odour; we are iterating over the table in a different order each time.
+That seems to be the case even though we use the `ordered_pairs` iterator in `table_string`.
+
+NOTE: We did have a shot at getting the LLM to fix the problem, but it just rewrote a lot of code and introduced new bugs. The LLM is not yet ready to solve this subtle problem.
+
+Once we had established that the problem was due to the iteration order, it was time to fix it.
+Using `ordered_pairs` in `table_string`, we expected to get the table elements in the same order each time.
+Looking through the code, we found that the `metadata` method was *not* using that iterator.
+
+A quick fix is to slightly alter the signature of `metadata` to take an optional `comparator` function.
+We can then use that and move the main loop from `pairs` to `ordered_pairs`:
+```lua
+local function metadata(root_tbl, comparator)       -- <1>
+    ...
+    local function process(tbl)
+        local size, array, subs = 0, true, 0
+        local children = {}
+        local iter = ordered_pairs(comparator)      -- <2>
+        for _, v in iter(tbl) do
+            ...
+        end
+        md[tbl].size, md[tbl].array, md[tbl].subs = size, array, subs
+        for _, child in ipairs(children) do process(child) end   -- <3>
+    end
+    process(root_tbl)
+    return md
+end
+
+local function table_string(root_tbl, opts)
+    local md = metadata(root_tbl, opts.comparator)   -- <4>
+    ...
+end
+```
+1. The `metadata` method is now passed the `comparator` function.
+2. The `ordered_pairs` function is used to iterate over the table.
+3. The `ipairs` function is fine here as we are over an array.
+4. `table_string` passes the `comparator` from the options table to `metadata` method.
+
+This change fixed the problem, and the test now passes.
+Repeating the test, we get the correct output every time.
+
+### A More Elegant Solution
+
+`scribe` aims to be a general solution for viewing arbitrary tables in the best human-readable format.
+It does not aspire to be maximally efficient in pursuit of that goal.
+However, our quick solution suffers from an obvious efficiency issue.
+
+We are instantiating `ordered_pairs` *twice*; once in `table_string` and once in `metadata`.
+The table keys must be extracted and sorted each time we do this.
+
+Well, we have a `metadata` method already.
+Why not make the appropriate iterator another piece of metadata for each table?
+
+We can then use that iterator in the `table_string` method.
+This way, we only pay the price for sorting the keys once.
+
+There are several possibilities for the iterator:
+
+- We should use `ipairs` if the table is an array.
+- We should use `pairs` if the `comparator` is `false`.
+- We should use some form of `ordered_pairs` if we have a comparator function.
+
+
+Before we iterate through the depths of a table, we first write a helper function to get some metadata fields for the top level of a table:
+
+```lua
+local function top_level_metadata(tbl, comparator)
+    ...
+end
+```
+
+This function will return three values:
+
+- A boolean indicating if the table is an array.
+- The size of the table.
+- The appropriate iterator to use to iterate over the table.
+
+We can then use this helper function to get the metadata fields all the way down the table:
+```lua
+local function metadata(root_tbl, comparator)
+    local md = {}
+    md[root_tbl] = { refs = 1 }
+
+    local function process(tbl)
+        md[tbl].array, md[tbl].size, md[tbl].iter = top_level_metadata(tbl, comparator)  -- <1>
+
+        local subs, sub_tables = 0, {}
+        local iter = md[tbl].iter                                                        -- <2>
+        for _, v in iter(tbl) do
+            if type(v) == 'table' then
+                if md[v] then
+                    md[v].refs = md[v].refs + 1
+                else
+                    subs = subs + 1
+                    table.insert(sub_tables, v)
+                    md[v] = { refs = 1 }
+                end
+            end
+        end
+        md[tbl].subs = subs
+        for _, sub_table in ipairs(sub_tables) do process(sub_table) end
+    end
+
+    process(root_tbl)
+    return md
+end
+```
+1. The `top_level_metadata` function is called to get three metadata fields for the top level of the table.
+2. One of those three values is the appropriate iterator to iterate over the table we use here.
+
+The `table_string` method is then updated to use the iterator from the metadata:
+```lua
+local function table_string(root_tbl, opts)
+    local md = metadata(root_tbl, opts.comparator)
+    ...
+    local function process(tbl, path)
+        ...
+        local i, iter = 0, md[tbl].iter
+        for k, v in iter(tbl) do            -- <1>
+            i = i + 1
+            ...
+        end
+    end
+    process(root_tbl, '')
+end
+```
+1. The `iter` function is reused here. It already has the sorted array of table keys if needed.
+
+It only remains to look at the `top_level_metadata` function shown here in full:
+```lua
+local function top_level_metadata(tbl, comparator)
+    if comparator == false then                                     -- <1>
+        local array, size = true, 0
+        for _ in pairs(tbl) do
+            size = size + 1
+            if array and tbl[size] == nil then array = false end
+        end
+        local iter = array and ipairs or pairs                      -- <2>
+        return array, size, iter                                    -- <3>
+    end
+
+    local array, size, keys = true, 0, {}                          -- <4>
+    for k, _ in pairs(tbl) do
+        size = size + 1
+        if array and tbl[size] == nil then array = false end
+        table.insert(keys, k)
+    end
+    if array then return array, size, ipairs end                    -- <5>
+
+    if comparator == nil then comparator = compare end              -- <6>
+    table.sort(keys, comparator)
+
+    local iter = function(t)                                         -- <7>
+        local i = 0
+        return function()
+            i = i + 1
+            return keys[i], t[keys[i]]
+        end
+    end
+    return array, size, iter
+end
+```
+1. If the comparator is `false`, we will use a default Lua iterator.
+2. If the table is an array, we will use `ipairs`; otherwise, we will use `pairs`.
+3. We return three bits of metadata --- an array flag, the size of the table and the iterator.
+4. If the comparator is anything but `false`, we may have to sort the table keys so we collect them along the way.
+5. If the table is an array, we don't need the keys and return `ipairs` as the appropriate iterator.
+6. Sort the keys using the comparator function if one was provided or the default one.
+7. `iter` is a *closure*, a local function with access to the `keys` variable. It is the appropriate iterator for the table in question.
+
+Note that the `iter` function takes a table as an argument.
+In practice, `iter` will only be called with `tbl`, where the `keys` come from.
+However, `iter` is written in the style of a *generic* iterator that can be used with any table.
+The `metadata` method and the `table_string` methods can call `for k,v in iter(tbl) do ... end` and not worry about whether `iter` is `ipairs`, `pairs` or something completely custom.
+
+### Conclusion
+
+Lots of fun with AI!
+
+If you do let something like Cursor loose to fix bugs in your codebase, you need to be comfortable using the git history or perhaps the timeline tool to backtrack!
+It's probably a good idea to have the LLM work in its git branch and not mix the changes with your code until you approve them.
+
+On the other hand, Cursor did come up with a simple test that pointed out an actual issue with the code.
+Its ability to generate lots of tests from a prompt is impressive.
+Its tests are at least a little independent of the ones you will likely have written yourself.
