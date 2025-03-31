@@ -28,3 +28,4 @@ format:
 {{< include _module.qmd >}}
 {{< include _formatted-output.qmd >}}
 {{< include _bug.qmd >}}
+{{< include _optimisation.qmd >}}
