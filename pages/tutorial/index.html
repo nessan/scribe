@@ -279,6 +279,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-scribe-module" id="toc-the-scribe-module" class="nav-link" data-scroll-target="#the-scribe-module">The <code>scribe</code> Module</a></li>
   <li><a href="#formatted-output" id="toc-formatted-output" class="nav-link" data-scroll-target="#formatted-output">Formatted Output</a></li>
   <li><a href="#a-subtle-bug" id="toc-a-subtle-bug" class="nav-link" data-scroll-target="#a-subtle-bug">A Subtle Bug!</a></li>
+  <li><a href="#a-small-optimisation" id="toc-a-small-optimisation" class="nav-link" data-scroll-target="#a-small-optimisation">A Small Optimisation</a></li>
   </ul>
 <div class="toc-actions"><ul class="collapse"><li><a href="https://github.com/nessan/scribe/edit/main/docs/pages/tutorial/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/nessan/scribe/issues/new/choose" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -4720,9 +4721,109 @@ We did have a shot at getting the LLM to fix the problem, but it just rewrote a 
 <p>Lots of fun with AI!</p>
 <p>If you do let something like Cursor loose to fix bugs in your codebase, you need to be comfortable using the git history or perhaps the timeline tool to backtrack! It’s probably a good idea to have the LLM work in its git branch and not mix the changes with your code until you approve them.</p>
 <p>On the other hand, Cursor did come up with a simple test that pointed out an actual issue with the code. Its ability to generate lots of tests from a prompt is impressive. Its tests are at least a little independent of the ones you will likely have written yourself.</p>
-
-
 </section>
+</section>
+<section id="a-small-optimisation" class="level2">
+<h2 class="anchored" data-anchor-id="a-small-optimisation">A Small Optimisation</h2>
+<p>A comment on Reddit suggested that the <code>indent_string</code> function could be optimised by storing the individual indented lines in a table and combining them using table concatenation at the end of the method.</p>
+<p>The original version builds up the indented string bit by bit on the fly:</p>
+<div class="sourceCode" id="annotated-cell-239"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-239-1"><a href="#annotated-cell-239-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> indent_string_orig<span class="op">(</span><span class="va">str</span><span class="op">,</span> <span class="va">indent</span><span class="op">,</span> <span class="va">ignore_first_line</span><span class="op">)</span></span>
+<span id="annotated-cell-239-2"><a href="#annotated-cell-239-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">ignore_first_line</span> <span class="op">=</span> <span class="va">ignore_first_line</span> <span class="kw">or</span> <span class="kw">false</span></span>
+<span id="annotated-cell-239-3"><a href="#annotated-cell-239-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">indent</span> <span class="kw">or</span> <span class="va">indent</span> <span class="op">==</span> <span class="st">""</span> <span class="kw">or</span> <span class="kw">not</span> <span class="va">str</span> <span class="kw">or</span> <span class="va">str</span> <span class="op">==</span> <span class="st">""</span> <span class="cf">then</span> <span class="cf">return</span> <span class="va">str</span> <span class="cf">end</span></span>
+<span id="annotated-cell-239-4"><a href="#annotated-cell-239-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ends_with_newline</span> <span class="op">=</span> <span class="va">str</span><span class="op">:</span><span class="fu">sub</span><span class="op">(-</span><span class="dv">1</span><span class="op">)</span> <span class="op">==</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span></span>
+<span id="annotated-cell-239-5"><a href="#annotated-cell-239-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-239-6"><a href="#annotated-cell-239-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">indented_str</span> <span class="op">=</span> <span class="st">""</span></span>
+<span id="annotated-cell-239-7"><a href="#annotated-cell-239-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">first_line</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="annotated-cell-239-8"><a href="#annotated-cell-239-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">line</span> <span class="kw">in</span> <span class="va">str</span><span class="op">:</span><span class="fu">gmatch</span><span class="op">(</span><span class="st">"([^</span><span class="sc">\n</span><span class="st">]*)</span><span class="sc">\n</span><span class="st">?"</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-239-9"><a href="#annotated-cell-239-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> <span class="va">first_line</span> <span class="cf">then</span> <span class="va">indented_str</span> <span class="op">=</span> <span class="va">indented_str</span> <span class="op">..</span> <span class="st">'</span><span class="sc">\n</span><span class="st">'</span> <span class="cf">end</span></span>
+<span id="annotated-cell-239-10"><a href="#annotated-cell-239-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">tab</span> <span class="op">=</span> <span class="va">first_line</span> <span class="kw">and</span> <span class="va">ignore_first_line</span> <span class="kw">and</span> <span class="st">''</span> <span class="kw">or</span> <span class="va">indent</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-239" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-239-11" class="code-annotation-target"><a href="#annotated-cell-239-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">indented_str</span> <span class="op">=</span> <span class="va">indented_str</span> <span class="op">..</span> <span class="va">tab</span> <span class="op">..</span> <span class="va">line</span></span>
+<span id="annotated-cell-239-12"><a href="#annotated-cell-239-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">first_line</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="annotated-cell-239-13"><a href="#annotated-cell-239-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="annotated-cell-239-14"><a href="#annotated-cell-239-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">ends_with_newline</span> <span class="cf">then</span> <span class="va">indented_str</span> <span class="op">=</span> <span class="va">indented_str</span> <span class="op">..</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span> <span class="cf">end</span></span>
+<span id="annotated-cell-239-15"><a href="#annotated-cell-239-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">indented_str</span></span>
+<span id="annotated-cell-239-16"><a href="#annotated-cell-239-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-239" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-239" data-code-lines="11" data-code-annotation="1">We keep appending to <code>indented_str</code> which eventually gets returned at the end of the function.</span>
+</dd>
+</dl>
+<p>Here is an alternate version that stores the individiual indented lines in a table and only joins them together at the end of the method:</p>
+<div class="sourceCode" id="annotated-cell-240"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-240-1"><a href="#annotated-cell-240-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> indent_string<span class="op">(</span><span class="va">str</span><span class="op">,</span> <span class="va">indent</span><span class="op">,</span> <span class="va">ignore_first_line</span><span class="op">)</span></span>
+<span id="annotated-cell-240-2"><a href="#annotated-cell-240-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">ignore_first_line</span> <span class="op">=</span> <span class="va">ignore_first_line</span> <span class="kw">or</span> <span class="kw">false</span></span>
+<span id="annotated-cell-240-3"><a href="#annotated-cell-240-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">indent</span> <span class="kw">or</span> <span class="va">indent</span> <span class="op">==</span> <span class="st">""</span> <span class="kw">or</span> <span class="kw">not</span> <span class="va">str</span> <span class="kw">or</span> <span class="va">str</span> <span class="op">==</span> <span class="st">""</span> <span class="cf">then</span> <span class="cf">return</span> <span class="va">str</span> <span class="cf">end</span></span>
+<span id="annotated-cell-240-4"><a href="#annotated-cell-240-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">ends_with_newline</span> <span class="op">=</span> <span class="va">str</span><span class="op">:</span><span class="fu">sub</span><span class="op">(-</span><span class="dv">1</span><span class="op">)</span> <span class="op">==</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span></span>
+<span id="annotated-cell-240-5"><a href="#annotated-cell-240-5" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-240" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-240-6" class="code-annotation-target"><a href="#annotated-cell-240-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">lines</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="annotated-cell-240-7"><a href="#annotated-cell-240-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">first_line</span> <span class="op">=</span> <span class="kw">true</span></span>
+<span id="annotated-cell-240-8"><a href="#annotated-cell-240-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">line</span> <span class="kw">in</span> <span class="va">str</span><span class="op">:</span><span class="fu">gmatch</span><span class="op">(</span><span class="st">"[^</span><span class="sc">\r\n</span><span class="st">]+"</span><span class="op">)</span> <span class="cf">do</span></span>
+<span id="annotated-cell-240-9"><a href="#annotated-cell-240-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">local</span> <span class="va">tab</span> <span class="op">=</span> <span class="va">first_line</span> <span class="kw">and</span> <span class="va">ignore_first_line</span> <span class="kw">and</span> <span class="st">''</span> <span class="kw">or</span> <span class="va">indent</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-240" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-240-10" class="code-annotation-target"><a href="#annotated-cell-240-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">table.insert</span><span class="op">(</span><span class="fu">lines</span><span class="op">,</span> <span class="va">tab</span> <span class="op">..</span> <span class="va">line</span><span class="op">)</span></span>
+<span id="annotated-cell-240-11"><a href="#annotated-cell-240-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">first_line</span> <span class="op">=</span> <span class="kw">false</span></span>
+<span id="annotated-cell-240-12"><a href="#annotated-cell-240-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-240" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-240-13" class="code-annotation-target"><a href="#annotated-cell-240-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">retval</span> <span class="op">=</span> <span class="fu">table.concat</span><span class="op">(</span><span class="fu">lines</span><span class="op">,</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">)</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-240" data-target-annotation="4" onclick="event.preventDefault();">4</a><span id="annotated-cell-240-14" class="code-annotation-target"><a href="#annotated-cell-240-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">ends_with_newline</span> <span class="cf">then</span> <span class="va">retval</span> <span class="op">=</span> <span class="va">retval</span> <span class="op">..</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span> <span class="cf">end</span></span>
+<span id="annotated-cell-240-15"><a href="#annotated-cell-240-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">retval</span></span>
+<span id="annotated-cell-240-16"><a href="#annotated-cell-240-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-240" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-240" data-code-lines="6" data-code-annotation="1"><code>lines</code> is a table used to store the individual indented lines from <code>str</code>.</span>
+</dd>
+<dt data-target-cell="annotated-cell-240" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-240" data-code-lines="10" data-code-annotation="2">We iterate through the lines in <code>str</code> and insert indented versions into that table.</span>
+</dd>
+<dt data-target-cell="annotated-cell-240" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-240" data-code-lines="13" data-code-annotation="3">We join all the lines together using Lua’s standard <code>table.concat</code> method.</span>
+</dd>
+<dt data-target-cell="annotated-cell-240" data-target-annotation="4">4</dt>
+<dd>
+<span data-code-cell="annotated-cell-240" data-code-lines="14" data-code-annotation="4">If the input string ended with a newline character then so should the output string.</span>
+</dd>
+</dl>
+<p>Here is a simple function to benchmark the two versions:</p>
+<div class="sourceCode" id="annotated-cell-241"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-241-1"><a href="#annotated-cell-241-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="kw">function</span> benchmark_indents<span class="op">()</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-241" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-241-2" class="code-annotation-target"><a href="#annotated-cell-241-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">test_str</span> <span class="op">=</span> <span class="fu">string.rep</span><span class="op">(</span><span class="st">'line</span><span class="sc">\n</span><span class="st">'</span><span class="op">,</span> <span class="dv">10000</span><span class="op">)</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-241" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-241-3" class="code-annotation-target"><a href="#annotated-cell-241-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">iterations</span> <span class="op">=</span> <span class="dv">100</span></span>
+<span id="annotated-cell-241-4"><a href="#annotated-cell-241-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-241-5"><a href="#annotated-cell-241-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- Benchmark the `indent_string_orig` method:</span></span>
+<span id="annotated-cell-241-6"><a href="#annotated-cell-241-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span><span class="op">(</span><span class="st">'Benchmarking `indent_string_orig` ...'</span><span class="op">)</span></span>
+<span id="annotated-cell-241-7"><a href="#annotated-cell-241-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">start_time</span> <span class="op">=</span> <span class="fu">os.clock</span><span class="op">()</span></span>
+<span id="annotated-cell-241-8"><a href="#annotated-cell-241-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">iterations</span> <span class="cf">do</span></span>
+<span id="annotated-cell-241-9"><a href="#annotated-cell-241-9" aria-hidden="true" tabindex="-1"></a>        indent_string_orig<span class="op">(</span><span class="va">test_str</span><span class="op">,</span> <span class="st">'    '</span><span class="op">)</span></span>
+<span id="annotated-cell-241-10"><a href="#annotated-cell-241-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="annotated-cell-241-11"><a href="#annotated-cell-241-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">t1</span> <span class="op">=</span> <span class="fu">os.clock</span><span class="op">()</span> <span class="op">-</span> <span class="va">start_time</span></span>
+<span id="annotated-cell-241-12"><a href="#annotated-cell-241-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-241-13"><a href="#annotated-cell-241-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- Benchmark the `indent_string` method:</span></span>
+<span id="annotated-cell-241-14"><a href="#annotated-cell-241-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span><span class="op">(</span><span class="st">'Benchmarking `indent_string` ...'</span><span class="op">)</span></span>
+<span id="annotated-cell-241-15"><a href="#annotated-cell-241-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">start_time</span> <span class="op">=</span> <span class="fu">os.clock</span><span class="op">()</span></span>
+<span id="annotated-cell-241-16"><a href="#annotated-cell-241-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="va">i</span> <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="va">iterations</span> <span class="cf">do</span></span>
+<span id="annotated-cell-241-17"><a href="#annotated-cell-241-17" aria-hidden="true" tabindex="-1"></a>        indent_string<span class="op">(</span><span class="va">test_str</span><span class="op">,</span> <span class="st">'    '</span><span class="op">)</span></span>
+<span id="annotated-cell-241-18"><a href="#annotated-cell-241-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="annotated-cell-241-19"><a href="#annotated-cell-241-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">t2</span> <span class="op">=</span> <span class="fu">os.clock</span><span class="op">()</span> <span class="op">-</span> <span class="va">start_time</span></span>
+<span id="annotated-cell-241-20"><a href="#annotated-cell-241-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="annotated-cell-241-21"><a href="#annotated-cell-241-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- Print and compare the results:</span></span>
+<span id="annotated-cell-241-22"><a href="#annotated-cell-241-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span><span class="op">(</span><span class="fu">string.format</span><span class="op">(</span><span class="st">"indent_string_orig took: %.4f seconds"</span><span class="op">,</span> <span class="va">t1</span><span class="op">))</span></span>
+<span id="annotated-cell-241-23"><a href="#annotated-cell-241-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span><span class="op">(</span><span class="fu">string.format</span><span class="op">(</span><span class="st">"indent_string took:      %.4f seconds"</span><span class="op">,</span> <span class="va">t2</span><span class="op">))</span></span>
+<span id="annotated-cell-241-24"><a href="#annotated-cell-241-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span><span class="op">(</span><span class="fu">string.format</span><span class="op">(</span><span class="st">"indent_string is %.2fx %s than indent_string_orig"</span><span class="op">,</span></span>
+<span id="annotated-cell-241-25"><a href="#annotated-cell-241-25" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">math.abs</span><span class="op">(</span><span class="va">t1</span> <span class="op">/</span> <span class="va">t2</span><span class="op">),</span> <span class="va">t2</span> <span class="op">&lt;</span> <span class="va">t1</span> <span class="kw">and</span> <span class="st">"faster"</span> <span class="kw">or</span> <span class="st">"slower"</span><span class="op">))</span></span>
+<span id="annotated-cell-241-26"><a href="#annotated-cell-241-26" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-241" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-241" data-code-lines="2" data-code-annotation="1">Create a largish test string with lots of lines to indent.</span>
+</dd>
+<dt data-target-cell="annotated-cell-241" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-241" data-code-lines="3" data-code-annotation="2">We run enough iterations of the two methods to consume a decent interval of time. <br> That way we’re sure that any loop overhead is not an important factor in the comparison.</span>
+</dd>
+</dl>
+<p>On my machine, the optimised version is faster by a factor of 10 or more. The test is quite rough and ready but clearly the table version is worth moving to!</p>
+
+
 </section>
 
 <a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
