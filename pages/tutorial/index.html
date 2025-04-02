@@ -104,6 +104,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-KN2F5ELKFN"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-KN2F5ELKFN', { 'anonymize_ip': true});
+</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 
@@ -412,11 +421,12 @@ Lua always aims for the minimal and has only eight types in <em>total</em>. <br>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">function:</span> 0x600002650ca0</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>We don’t usually write things like <code>print(answer)</code> in our code except by accident! When we do, it’s likely a bug. We probably <em>meant</em> to write <code>print(answer())</code> with those parentheses <code>()</code> that tells Lua to please execute the <code>answer</code> function and capture the result, So, while the output from <code>print(answer)</code> is opaque, it’s generally followed by an “oops, I forgot some parentheses!”</p>
 </section>
-<section id="two-non-native-types" class="level3">
-<h3 class="anchored" data-anchor-id="two-non-native-types">Two Non-Native Types</h3>
-<p>One of Lua’s great strengths is its ability to interface with things written in other languages. Lua’s two non-native types, <code>userdata</code> and <code>thread</code>, are associated with non-native items.</p>
+<section id="two-opaque-types" class="level3">
+<h3 class="anchored" data-anchor-id="two-opaque-types">Two Opaque Types</h3>
+<p>One of Lua’s great strengths is its ability to interface with things written in other languages. Lua’s <code>userdata</code> type is commonly associated with this ability.</p>
 <p>When you try to print something implemented in another language, it is hardly surprising that Lua can only say, “I see that as a piece of user data located at this address in memory.”</p>
 <p>You can’t expect much more; if you need something more descriptive, you’d expect to perform that action in another language.</p>
+<p>Lua also has a <code>thread</code> type, which is used to implement coroutines. Again this is an opaque type, so <code>print</code> will only say, “I see that as a thread …” and give you a memory address.</p>
 </section>
 <section id="array-tables" class="level3">
 <h3 class="anchored" data-anchor-id="array-tables">Array Tables</h3>
