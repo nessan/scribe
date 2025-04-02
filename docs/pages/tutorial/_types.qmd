@@ -91,14 +91,17 @@ When we do, it's likely a bug.
 We probably *meant* to write `print(answer())` with those parentheses `()` that tells Lua to please execute the `answer` function and capture the result,
 So, while the output from `print(answer)` is opaque, it's generally followed by an "oops, I forgot some parentheses!"
 
-### Two Non-Native Types
+### Two Opaque Types
 
 One of Lua's great strengths is its ability to interface with things written in other languages.
-Lua's two non-native types, `userdata` and `thread`, are associated with non-native items.
+Lua's `userdata` type is commonly associated with this ability.
 
 When you try to print something implemented in another language, it is hardly surprising that Lua can only say, "I see that as a piece of user data located at this address in memory."
 
 You can't expect much more; if you need something more descriptive, you'd expect to perform that action in another language.
+
+Lua also has a `thread` type, which is used to implement coroutines.
+Again this is an opaque type, so `print` will only say, "I see that as a thread ..." and give you a memory address.
 
 ### Array Tables
 
