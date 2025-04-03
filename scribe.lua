@@ -637,22 +637,24 @@ function M.format(template, ...)
     for i = 1, #table_placeholders do
         local index, mod, spec = unpack(table_placeholders[i])
         local full_spec = mod .. spec
+        local tbl = args[index]
 
         -- How we format the table depends on the full specifier.
+        -- If the table has its own `inline` method then we use that, otherwise we use the `scribe.inline` method, etc.
         if full_spec == 't' then
-            args[index] = M.inline(args[index])
+            args[index] = tbl.inline and tbl:inline() or M.inline(tbl)
         elseif full_spec == 'T' then
-            args[index] = M.pretty(args[index])
+            args[index] = tbl.pretty and tbl:pretty() or M.pretty(tbl)
         elseif full_spec == '2T' then
-            args[index] = M.classic(args[index])
+            args[index] = tbl.classic and tbl:classic() or M.classic(tbl)
         elseif full_spec == '3T' then
-            args[index] = M.alt(args[index])
+            args[index] = tbl.alt and tbl:alt() or M.alt(tbl)
         elseif full_spec == 'J' then
-            args[index] = M.json(args[index])
+            args[index] = tbl.json and tbl:json() or M.json(tbl)
         elseif full_spec == 'j' then
-            args[index] = M.inline_json(args[index])
+            args[index] = tbl.inline_json and tbl:inline_json() or M.inline_json(tbl)
         elseif full_spec == '9T' then
-            args[index] = M.debug(args[index])
+            args[index] = tbl.debug and tbl:debug() or M.debug(tbl)
         else
             return string.format("[FORMAT ERROR]: %q -- unknown table specifier: %q\n", template, full_spec)
         end

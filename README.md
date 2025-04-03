@@ -4,9 +4,6 @@ Scribe provides functions to convert Lua objects to readable strings and output 
 
 For example, if `arr = {1, 2, 3}` then `scribe.put("Array: %t", arr)` will print "Array: [ 1, 2, 3 ]" to `stdout`.
 
-Scribe gracefully handles complex tables, including ones with shared and cyclical references.
-The strings returned for those tables show the underlying structure in a way that is as readable as possible.
-
 You can customise the strings returned for tables by passing a set of formatting options, and there are pre-defined options that will work for most applications. Those include printing tables on a single line, in a “pretty” format on multiple lines, or as JSON-like descriptors.
 
 ## Example
@@ -62,6 +59,62 @@ We could instead dump the table in a JSON format with the call `putln("%J", user
         }
     }
 }
+```
+
+## Complex Tables
+
+Scribe gracefully handles complex tables, including ones with shared and cyclical references. The strings returned for those tables show the underlying structure in a manner that is as readable as possible.
+
+If you have:
+
+```lua
+local classes = {p1 = {subject = 'History', room = 401}, p2 = {subject = 'Spanish', room = 321}}
+classes.p1.next = classes.p2
+classes.p2.prev = classes.p1
+```
+
+Then `putln("Classes: %T", classes)` prints:
+
+```txt
+Classes: {
+    p1 = { next = <p2>, room = 401, subject = "History" },
+    p2 = { prev = <p1>, room = 321, subject = "Spanish" }
+}
+```
+
+## Use Your Own String Methods
+
+If your table has _custom_ `inline`, `pretty`, `classic`, `alt`, `json`, or `inline_json` methods, then `scribe.format`, and the other `scribe` output functions like `scribe.putln`, will use your methods to format the table.
+
+For example, if you have a class with a custom `inline` method like the following:
+
+```lua
+local Pupil = {}
+Pupil.__index = Pupil
+
+function Pupil:new(name, age)
+    local self = setmetatable({}, Pupil)
+    self.name = name
+    self.age = age
+    return self
+end
+
+function Pupil:inline()
+    return string.format("Pupil: %s is aged %d", self.name, self.age)
+end
+```
+
+Then, that `inline` method will be used to print the table when you call on `putln`:
+
+```lua
+local pupil = Pupil:new("Mary", 12)
+putln("%t", pupil)
+```
+
+Outputs:
+
+```txt
+Pupil: Mary is aged 12
 ```
 
 ## Installation

@@ -52,7 +52,7 @@ The actual conversion of the table to a string is then done by {scribe.inline}.
 
 ## Table Format Specifiers
 
-As well as all the usual Lua format specifiers like `%s` for strings after importing `scribe,` Scribe recognises these extra ones to deal with tables.
+As well as all the usual Lua format specifiers like `%s` for strings, Scribe recognises extra ones to deal with tables.
 
 Specifier  | Output from the Corresponding Table Argument
 --------- | ---------------------------------------------------------------------------------------
@@ -77,7 +77,53 @@ putln("Our pupils: %t", pupils)
 Our pupils: [ { age = 12, name = "Mary" }, { age = 11, name = "Joe" } ]
 ```
 
-## Class Extensions
+## Custom Stringification Methods
+
+If your table has *custom* `inline`, `pretty`, `classic`, `alt`, `json`, `inline_json` or `debug` methods, then `scribe.format`, and the other `scribe` methods like `scribe.putln`, will use those methods to format the table.
+
+For example, if you have a class like this:
+```lua
+local Pupil = {}
+Pupil.__index = Pupil
+
+function Pupil:new(name, age)
+	local self = setmetatable({}, Pupil)
+	self.name = name
+	self.age = age
+	return self
+end
+```
+Then, the default `scribe.format` methods will be used to print the table:
+```lua
+local pupil = Pupil:new("Mary", 12)
+putln("%t", pupil)
+```
+Outputs:
+```txt
+{ age = 12, name = "Mary" }
+```
+
+Once we add a custom `inline` method to the class:
+```lua
+function Pupil:inline()
+	return string.format("Pupil: %s is aged %d", self.name, self.age)
+end
+```
+Then, that `inline` method will be used to print the table:
+```lua
+putln("%t", pupil)
+```
+Outputs:
+```txt
+Pupil: Mary is aged 12
+```
+
+NOTE: The custom methods must be named `inline`, `pretty`, `classic`, `alt`, `json`, `inline_json` or `debug`.
+You don't need to implement all of them.
+In fact, it is common to implement the ones you need by using the `scribe.format` with custom option tables.
+You just need to be careful to avoid infinite loops by setting the `use_metatable` option to `false` where appropriate.
+
+## String & File Extensions
 
 Scribe also adds some methods to Lua's `file` and `string` classes.
 
