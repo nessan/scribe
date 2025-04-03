@@ -351,7 +351,11 @@ local function table_string(root_tbl, opts)
 
     -- If there is a self-reference to the root table we prepend something like "<table> = " to the output.
     if md[root_tbl].refs > 1 then
-        retval = pb .. opts.path_root .. pe .. ' = ' .. retval
+        -- Make sure not to add the prefix if it is already there.
+        local self_ref_prefix = pb .. opts.path_root .. pe .. ' = '
+        if not retval:find('^' .. self_ref_prefix) then
+            retval = self_ref_prefix .. retval
+        end
     end
 
     -- All done.
