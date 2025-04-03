@@ -77,6 +77,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-1c72929d01b0088021efc93cecacfdad.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
 <link href="../site_libs/bootstrap/bootstrap-dark-fd7f26691d08b4217965b71eb792887a.min.css" rel="prefetch" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/quarto-contrib/admonitions-1.0.0/admonitions.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -113,6 +114,7 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-KN2F5ELKFN', { 'anonymize_ip': true});
 </script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 
 <meta property="og:title" content="Formatted Output – Scribe">
@@ -270,7 +272,8 @@ gtag('config', 'G-KN2F5ELKFN', { 'anonymize_ip': true});
   <ul>
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#table-format-specifiers" id="toc-table-format-specifiers" class="nav-link" data-scroll-target="#table-format-specifiers">Table Format Specifiers</a></li>
-  <li><a href="#class-extensions" id="toc-class-extensions" class="nav-link" data-scroll-target="#class-extensions">Class Extensions</a></li>
+  <li><a href="#custom-stringification-methods" id="toc-custom-stringification-methods" class="nav-link" data-scroll-target="#custom-stringification-methods">Custom Stringification Methods</a></li>
+  <li><a href="#string-file-extensions" id="toc-string-file-extensions" class="nav-link" data-scroll-target="#string-file-extensions">String &amp; File Extensions</a></li>
   <li><a href="#errors" id="toc-errors" class="nav-link" data-scroll-target="#errors">Errors</a></li>
   <li><a href="#see-also" id="toc-see-also" class="nav-link" data-scroll-target="#see-also">See Also</a></li>
   </ul>
@@ -360,7 +363,7 @@ gtag('config', 'G-KN2F5ELKFN', { 'anonymize_ip': true});
 </section>
 <section id="table-format-specifiers" class="level2">
 <h2 class="anchored" data-anchor-id="table-format-specifiers">Table Format Specifiers</h2>
-<p>As well as all the usual Lua format specifiers like <code>%s</code> for strings after importing <code>scribe,</code> Scribe recognises these extra ones to deal with tables.</p>
+<p>As well as all the usual Lua format specifiers like <code>%s</code> for strings, Scribe recognises extra ones to deal with tables.</p>
 <div class="table-responsive">
 <table class="table-bordered table-striped table-hover caption-top table">
 <colgroup>
@@ -412,8 +415,42 @@ gtag('config', 'G-KN2F5ELKFN', { 'anonymize_ip': true});
 <p><span class="bt">Output:</span></p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Our pupils: [ { age = 12, name = "Mary" }, { age = 11, name = "Joe" } ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="class-extensions" class="level2">
-<h2 class="anchored" data-anchor-id="class-extensions">Class Extensions</h2>
+<section id="custom-stringification-methods" class="level2">
+<h2 class="anchored" data-anchor-id="custom-stringification-methods">Custom Stringification Methods</h2>
+<p>If your table has <em>custom</em> <code>inline</code>, <code>pretty</code>, <code>classic</code>, <code>alt</code>, <code>json</code>, <code>inline_json</code> or <code>debug</code> methods, then <code>scribe.format</code>, and the other <code>scribe</code> methods like <code>scribe.putln</code>, will use those methods to format the table.</p>
+<p>For example, if you have a class like this:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">Pupil</span> <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">Pupil</span><span class="op">.</span><span class="va">__index</span> <span class="op">=</span> <span class="va">Pupil</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Pupil</span><span class="op">:</span>new<span class="op">(</span><span class="va">name</span><span class="op">,</span> <span class="va">age</span><span class="op">)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">self</span> <span class="op">=</span> <span class="fu">setmetatable</span><span class="op">({},</span> <span class="va">Pupil</span><span class="op">)</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span><span class="op">.</span><span class="va">name</span> <span class="op">=</span> <span class="va">name</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span><span class="op">.</span><span class="va">age</span> <span class="op">=</span> <span class="va">age</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Then, the default <code>scribe.format</code> methods will be used to print the table:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">pupil</span> <span class="op">=</span> <span class="va">Pupil</span><span class="op">:</span>new<span class="op">(</span><span class="st">"Mary"</span><span class="op">,</span> <span class="dv">12</span><span class="op">)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>putln<span class="op">(</span><span class="st">"%t"</span><span class="op">,</span> <span class="va">pupil</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Outputs:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>{ age = 12, name = "Mary" }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Once we add a custom <code>inline</code> method to the class:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="va">Pupil</span><span class="op">:</span>inline<span class="op">()</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">string.format</span><span class="op">(</span><span class="st">"Pupil: %s is aged %d"</span><span class="op">,</span> <span class="va">self</span><span class="op">.</span><span class="va">name</span><span class="op">,</span> <span class="va">self</span><span class="op">.</span><span class="va">age</span><span class="op">)</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Then, that <code>inline</code> method will be used to print the table:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>putln<span class="op">(</span><span class="st">"%t"</span><span class="op">,</span> <span class="va">pupil</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Outputs:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode txt code-with-copy"><code class="sourceCode default"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>Pupil: Mary is aged 12</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="admonition note">
+    <table><tbody><tr>
+    <td class="icon"> <i class="fa icon-note" title="Note"></i></td>
+    <td class="content">
+    
+The custom methods must be named <code>inline</code>, <code>pretty</code>, <code>classic</code>, <code>alt</code>, <code>json</code>, <code>inline_json</code> or <code>debug</code>. You don’t need to implement all of them. In fact, it is common to implement the ones you need by using the <code>scribe.format</code> with custom option tables. You just need to be careful to avoid infinite loops by setting the <code>use_metatable</code> option to <code>false</code> where appropriate.
+</td></tr></tbody></table></div>
+</section>
+<section id="string-file-extensions" class="level2">
+<h2 class="anchored" data-anchor-id="string-file-extensions">String &amp; File Extensions</h2>
 <p>Scribe also adds some methods to Lua’s <code>file</code> and <code>string</code> classes.</p>
 <p>If <code>f</code> is a Lua file handle, and <code>s</code> is a Lua string, then after loading <code>scribe</code> you have access to the following new class methods:</p>
 <div class="table-responsive">
@@ -449,20 +486,20 @@ gtag('config', 'G-KN2F5ELKFN', { 'anonymize_ip': true});
 <h2 class="anchored" data-anchor-id="errors">Errors</h2>
 <p>Under the covers, <code>scribe.format</code> processes table arguments into strings and then relies on <code>string.format</code> to finish the formatting request. This means that <code>scribe.format</code> can raise the same errors as <code>string.format</code>.</p>
 <p>For example, if you forget to pass a trailing argument:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>putln<span class="op">(</span><span class="st">"My name is %s, and I am %d years old."</span><span class="op">,</span> <span class="st">"Tom"</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>putln<span class="op">(</span><span class="st">"My name is %s, and I am %d years old."</span><span class="op">,</span> <span class="st">"Tom"</span><span class="op">)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Then, the program will crash with an error message that looks like:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">.../scribe.lua:577:</span> bad argument <span class="co">#3 to 'format' (no value)</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">stack</span> traceback:</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">[C]:</span> in function <span class="st">'string.format'</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">.../scribe.lua:577:</span> in function <span class="st">'scribe.format'</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">.../scribe.lua:642:</span> in function <span class="st">'scribe.putln'</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">...</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">[C]:</span> in <span class="pp">?</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">.../scribe.lua:577:</span> bad argument <span class="co">#3 to 'format' (no value)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">stack</span> traceback:</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">[C]:</span> in function <span class="st">'string.format'</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">.../scribe.lua:577:</span> in function <span class="st">'scribe.format'</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">.../scribe.lua:642:</span> in function <span class="st">'scribe.putln'</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">...</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="ex">[C]:</span> in <span class="pp">?</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>In addition, <code>scribe.format</code> detects invalid placeholders in the template recipe. When that happens, the program does not crash. Instead, it returns a string that should make that programming error clear.</p>
 <p>For example if you have:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>putln<span class="op">(</span><span class="st">"The table is %7t."</span><span class="op">,</span> <span class="op">{</span><span class="dv">1</span><span class="op">,</span><span class="dv">2</span><span class="op">,</span><span class="dv">3</span><span class="op">})</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>putln<span class="op">(</span><span class="st">"The table is %7t."</span><span class="op">,</span> <span class="op">{</span><span class="dv">1</span><span class="op">,</span><span class="dv">2</span><span class="op">,</span><span class="dv">3</span><span class="op">})</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>This will output the error string:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">[FORMAT</span> ERROR]: <span class="st">"The table: %7t"</span> <span class="at">--</span> unknown table specifier: <span class="st">"7t"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">[FORMAT</span> ERROR]: <span class="st">"The table: %7t"</span> <span class="at">--</span> unknown table specifier: <span class="st">"7t"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="see-also" class="level2">
 <h2 class="anchored" data-anchor-id="see-also">See Also</h2>

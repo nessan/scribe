@@ -246,18 +246,29 @@
     "href": "pages/formatted-output.html#table-format-specifiers",
     "title": "Formatted Output",
     "section": "Table Format Specifiers",
-    "text": "Table Format Specifiers\nAs well as all the usual Lua format specifiers like %s for strings after importing scribe, Scribe recognises these extra ones to deal with tables.\n\n\n\n\n\n\n\n\nSpecifier\nOutput from the Corresponding Table Argument\n\n\n\n\n%t\nA one-line string.  Arrays are delimited as [ ... ].  Other tables are delimited as { ... }.\n\n\n%T\nA pretty, multi-line string.  Arrays are delimited as [ ... ].  Other tables are delimited as { ... }.  Simple tables with no sub-tables are still inlined.\n\n\n%2T\nA “classic” multi-line string with tables in braces and all elements on separate indented lines.\n\n\n%3T\nA multi-line string without delimiters that shows the table structure by indentation alone.\n\n\n%9T\nA debug string showing the table structure in an abstract syntax tree.\n\n\n%J\nA multiline JSON string.\n\n\n%j\nA compact one-line JSON string.\n\n\n\n\nExample:\nlocal putln = require('scribe').putln\nlocal pupils = {{name = 'Mary', age = 12}, {name = 'Joe', age = 11}}\nputln(\"Our pupils: %t\", pupils)\nOutput:\nOur pupils: [ { age = 12, name = \"Mary\" }, { age = 11, name = \"Joe\" } ]",
+    "text": "Table Format Specifiers\nAs well as all the usual Lua format specifiers like %s for strings, Scribe recognises extra ones to deal with tables.\n\n\n\n\n\n\n\n\nSpecifier\nOutput from the Corresponding Table Argument\n\n\n\n\n%t\nA one-line string.  Arrays are delimited as [ ... ].  Other tables are delimited as { ... }.\n\n\n%T\nA pretty, multi-line string.  Arrays are delimited as [ ... ].  Other tables are delimited as { ... }.  Simple tables with no sub-tables are still inlined.\n\n\n%2T\nA “classic” multi-line string with tables in braces and all elements on separate indented lines.\n\n\n%3T\nA multi-line string without delimiters that shows the table structure by indentation alone.\n\n\n%9T\nA debug string showing the table structure in an abstract syntax tree.\n\n\n%J\nA multiline JSON string.\n\n\n%j\nA compact one-line JSON string.\n\n\n\n\nExample:\nlocal putln = require('scribe').putln\nlocal pupils = {{name = 'Mary', age = 12}, {name = 'Joe', age = 11}}\nputln(\"Our pupils: %t\", pupils)\nOutput:\nOur pupils: [ { age = 12, name = \"Mary\" }, { age = 11, name = \"Joe\" } ]",
     "crumbs": [
       "Home",
       "Formatted Output"
     ]
   },
   {
-    "objectID": "pages/formatted-output.html#class-extensions",
-    "href": "pages/formatted-output.html#class-extensions",
+    "objectID": "pages/formatted-output.html#custom-stringification-methods",
+    "href": "pages/formatted-output.html#custom-stringification-methods",
     "title": "Formatted Output",
-    "section": "Class Extensions",
-    "text": "Class Extensions\nScribe also adds some methods to Lua’s file and string classes.\nIf f is a Lua file handle, and s is a Lua string, then after loading scribe you have access to the following new class methods:\n\n\n\n\n\n\n\n\nMethod\nBrief Description\n\n\n\n\nf:put(fmt, ...)\nThis is another way of writing scribe.fput(f, fmt, ...).\n\n\nf:putln(fmt, ...)\nThis is another way of writing scribe.fputln(f, fmt, ...).\n\n\ns:scribe(...)\nThis is another way of writing scribe.format(s, ...).",
+    "section": "Custom Stringification Methods",
+    "text": "Custom Stringification Methods\nIf your table has custom inline, pretty, classic, alt, json, inline_json or debug methods, then scribe.format, and the other scribe methods like scribe.putln, will use those methods to format the table.\nFor example, if you have a class like this:\nlocal Pupil = {}\nPupil.__index = Pupil\n\nfunction Pupil:new(name, age)\n    local self = setmetatable({}, Pupil)\n    self.name = name\n    self.age = age\n    return self\nend\nThen, the default scribe.format methods will be used to print the table:\nlocal pupil = Pupil:new(\"Mary\", 12)\nputln(\"%t\", pupil)\nOutputs:\n{ age = 12, name = \"Mary\" }\nOnce we add a custom inline method to the class:\nfunction Pupil:inline()\n    return string.format(\"Pupil: %s is aged %d\", self.name, self.age)\nend\nThen, that inline method will be used to print the table:\nputln(\"%t\", pupil)\nOutputs:\nPupil: Mary is aged 12\n\n    \n     \n    \n    \nThe custom methods must be named inline, pretty, classic, alt, json, inline_json or debug. You don’t need to implement all of them. In fact, it is common to implement the ones you need by using the scribe.format with custom option tables. You just need to be careful to avoid infinite loops by setting the use_metatable option to false where appropriate.",
+    "crumbs": [
+      "Home",
+      "Formatted Output"
+    ]
+  },
+  {
+    "objectID": "pages/formatted-output.html#string-file-extensions",
+    "href": "pages/formatted-output.html#string-file-extensions",
+    "title": "Formatted Output",
+    "section": "String & File Extensions",
+    "text": "String & File Extensions\nScribe also adds some methods to Lua’s file and string classes.\nIf f is a Lua file handle, and s is a Lua string, then after loading scribe you have access to the following new class methods:\n\n\n\n\n\n\n\n\nMethod\nBrief Description\n\n\n\n\nf:put(fmt, ...)\nThis is another way of writing scribe.fput(f, fmt, ...).\n\n\nf:putln(fmt, ...)\nThis is another way of writing scribe.fputln(f, fmt, ...).\n\n\ns:scribe(...)\nThis is another way of writing scribe.format(s, ...).",
     "crumbs": [
       "Home",
       "Formatted Output"
